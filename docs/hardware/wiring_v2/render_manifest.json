@@ -1,0 +1,14 @@
+[
+  {
+    "svg": "01_esp32_wiring_v2.svg",
+    "png": "01_esp32_wiring_v2.png"
+  },
+  {
+    "svg": "02_pi_wiring_v2.svg",
+    "png": "02_pi_wiring_v2.png"
+  },
+  {
+    "svg": "03_ir_resistor_v2.svg",
+    "png": "03_ir_resistor_v2.png"
+  }
+]

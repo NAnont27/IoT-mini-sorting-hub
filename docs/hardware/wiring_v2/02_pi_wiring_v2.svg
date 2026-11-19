@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1310" viewBox="0 0 1800 1310">
+<style>text{font-family:Tahoma,"Noto Sans Thai",sans-serif} .wire{fill:none;stroke-linejoin:round;stroke-linecap:round}</style>
+<rect width="1800" height="1310" fill="#f6f8fb"/>
+<rect x="25" y="20" width="1750" height="112" rx="18" fill="#173b65" stroke="#cbd5e1" stroke-width="2"/>
+<text x="50" y="67" font-size="32" fill="white" font-weight="700" text-anchor="start">2 / Raspberry Pi 5 — ผัง v2 / AS5600 + BH1750</text>
+<text x="50" y="108" font-size="20" fill="#dbeafe" font-weight="400" text-anchor="start">เลขฝั่ง Pi เป็นตำแหน่งขาจริง (PHYSICAL PIN) • ใช้ไฟเซนเซอร์ 3.3V • สายสัญญาณต่อขนาน</text>
+<rect x="50" y="180" width="460" height="900" rx="20" fill="#176247" stroke="#176247" stroke-width="2"/>
+<text x="280" y="235" font-size="30" fill="white" font-weight="700" text-anchor="middle">Raspberry Pi 5</text>
+<rect x="130" y="280" width="300" height="120" rx="8" fill="#bbc3c8" stroke="#e5e7eb" stroke-width="2"/>
+<text x="280" y="350" font-size="35" fill="#173b65" font-weight="700" text-anchor="middle">Pi 5</text>
+<text x="85" y="450" font-size="22" fill="white" font-weight="700" text-anchor="start">ขาที่นำออกมาใช้:</text>
+<text x="80" y="528" font-size="23" fill="white" font-weight="700" text-anchor="start">Pin 1 · 3.3V</text>
+<circle cx="510" cy="520" r="6" fill="#d97706"/>
+<polyline class="wire" points="510,520 700,520 700,180" stroke="#d97706" stroke-width="4"/>
+<circle cx="700" cy="520" r="6" fill="#d97706"/>
+<rect x="660" y="156" width="80" height="36" rx="6" fill="#d97706" stroke="#d97706" stroke-width="2"/>
+<text x="700.0" y="180" font-size="17" fill="white" font-weight="700" text-anchor="middle">3V3</text>
+<text x="80" y="628" font-size="23" fill="white" font-weight="700" text-anchor="start">Pin 6 · GND</text>
+<circle cx="510" cy="620" r="6" fill="#17212b"/>
+<polyline class="wire" points="510,620 800,620 800,180" stroke="#17212b" stroke-width="4"/>
+<circle cx="800" cy="620" r="6" fill="#17212b"/>
+<rect x="760" y="156" width="80" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="800.0" y="180" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND</text>
+<text x="80" y="728" font-size="23" fill="white" font-weight="700" text-anchor="start">Pin 3 · SDA / GPIO2</text>
+<circle cx="510" cy="720" r="6" fill="#ca8a04"/>
+<polyline class="wire" points="510,720 900,720 900,180" stroke="#ca8a04" stroke-width="4"/>
+<circle cx="900" cy="720" r="6" fill="#ca8a04"/>
+<rect x="860" y="156" width="80" height="36" rx="6" fill="#ca8a04" stroke="#ca8a04" stroke-width="2"/>
+<text x="900.0" y="180" font-size="17" fill="white" font-weight="700" text-anchor="middle">SDA</text>
+<text x="80" y="828" font-size="23" fill="white" font-weight="700" text-anchor="start">Pin 5 · SCL / GPIO3</text>
+<circle cx="510" cy="820" r="6" fill="#0284c7"/>
+<polyline class="wire" points="510,820 1000,820 1000,180" stroke="#0284c7" stroke-width="4"/>
+<circle cx="1000" cy="820" r="6" fill="#0284c7"/>
+<rect x="960" y="156" width="80" height="36" rx="6" fill="#0284c7" stroke="#0284c7" stroke-width="2"/>
+<text x="1000.0" y="180" font-size="17" fill="white" font-weight="700" text-anchor="middle">SCL</text>
+<text x="85" y="920" font-size="21" fill="#fee2e2" font-weight="700" text-anchor="start">Pin2 / Pin4 (5V): ไม่ใช้</text>
+<text x="85" y="965" font-size="21" fill="white" font-weight="400" text-anchor="start">USB-C PSU ของ Pi</text>
+<text x="85" y="1005" font-size="21" fill="#dbeafe" font-weight="700" text-anchor="start">Wi-Fi MQTT ↔ ESP32</text>
+<rect x="1120" y="220" width="620" height="350" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="1160" y="265" font-size="29" fill="#17212b" font-weight="700" text-anchor="start">BH1750 / GY-30</text>
+<text x="1560" y="265" font-size="25" fill="#173b65" font-weight="700" text-anchor="start">0x23</text>
+<polyline class="wire" points="700,180 700,310 1120,310" stroke="#d97706" stroke-width="4"/>
+<circle cx="700" cy="310" r="6" fill="#d97706"/>
+<circle cx="1120" cy="310" r="6" fill="#d97706"/>
+<text x="1160" y="318" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">VCC</text>
+<polyline class="wire" points="800,180 800,365 1120,365" stroke="#17212b" stroke-width="4"/>
+<circle cx="800" cy="365" r="6" fill="#17212b"/>
+<circle cx="1120" cy="365" r="6" fill="#17212b"/>
+<text x="1160" y="373" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">GND</text>
+<polyline class="wire" points="900,180 900,420 1120,420" stroke="#ca8a04" stroke-width="4"/>
+<circle cx="900" cy="420" r="6" fill="#ca8a04"/>
+<circle cx="1120" cy="420" r="6" fill="#ca8a04"/>
+<text x="1160" y="428" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">SDA</text>
+<polyline class="wire" points="1000,180 1000,475 1120,475" stroke="#0284c7" stroke-width="4"/>
+<circle cx="1000" cy="475" r="6" fill="#0284c7"/>
+<circle cx="1120" cy="475" r="6" fill="#0284c7"/>
+<text x="1160" y="483" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">SCL</text>
+<text x="1160" y="545" font-size="21" fill="#17212b" font-weight="700" text-anchor="start">ADDR → GND</text>
+<rect x="1120" y="650" width="620" height="350" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="1160" y="695" font-size="29" fill="#17212b" font-weight="700" text-anchor="start">AS5600</text>
+<text x="1560" y="695" font-size="25" fill="#173b65" font-weight="700" text-anchor="start">0x36</text>
+<polyline class="wire" points="700,180 700,740 1120,740" stroke="#d97706" stroke-width="4"/>
+<circle cx="700" cy="740" r="6" fill="#d97706"/>
+<circle cx="1120" cy="740" r="6" fill="#d97706"/>
+<text x="1160" y="748" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">VCC</text>
+<polyline class="wire" points="800,180 800,795 1120,795" stroke="#17212b" stroke-width="4"/>
+<circle cx="800" cy="795" r="6" fill="#17212b"/>
+<circle cx="1120" cy="795" r="6" fill="#17212b"/>
+<text x="1160" y="803" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">GND</text>
+<polyline class="wire" points="900,180 900,850 1120,850" stroke="#ca8a04" stroke-width="4"/>
+<circle cx="900" cy="850" r="6" fill="#ca8a04"/>
+<circle cx="1120" cy="850" r="6" fill="#ca8a04"/>
+<text x="1160" y="858" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">SDA</text>
+<polyline class="wire" points="1000,180 1000,905 1120,905" stroke="#0284c7" stroke-width="4"/>
+<circle cx="1000" cy="905" r="6" fill="#0284c7"/>
+<circle cx="1120" cy="905" r="6" fill="#0284c7"/>
+<text x="1160" y="913" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">SCL</text>
+<text x="1160" y="975" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">OUT / DIR / PGO: ไม่ต่อ</text>
+<rect x="550" y="1040" width="1190" height="90" rx="12" fill="#f0f9ff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="580" y="1077" font-size="22" fill="#17212b" font-weight="700" text-anchor="start">AS5600: แม่เหล็ก Diametric ตรงกลางเหนือชิป เริ่มห่าง 1–2 มม.</text>
+<text x="580" y="1110" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">บอร์ดอยู่นิ่ง หมุนแม่เหล็กรอบแกนของมัน • i2cdetect ควรพบ 23 และ 36</text>
+<rect x="50" y="1155" width="1690" height="120" rx="12" fill="#fff7ed" stroke="#edbd80" stroke-width="2"/>
+<text x="80" y="1192" font-size="23" fill="#17212b" font-weight="700" text-anchor="start">GND ของ Pi pin6 → ต่อร่วม ESP32 GND / ลบ Adapter</text>
+<text x="80" y="1230" font-size="20" fill="#9f1239" font-weight="400" text-anchor="start">ห้ามนำ +5V จาก Adapter Servo มาเชื่อมขาไฟ Pi • Camera Module 3 ใช้สาย CSI 15→22 pin แยก (ฝั่ง AI)</text>
+<text x="80" y="1263" font-size="18" fill="#17212b" font-weight="400" text-anchor="start">ภาพเป็นผัง breakout เชิงตรรกะ ไม่ใช่ตำแหน่งขาจริงบนตัวบอร์ด • ถอดไฟก่อนต่อสาย</text>
+</svg>

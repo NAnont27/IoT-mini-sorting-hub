@@ -1,0 +1,53 @@
+# Credentials and local configuration (commit examples only)
+.env
+.env.*
+!.env.example
+config.json
+config.json.tmp
+secrets.h
+*.pem
+*.key
+.ssh/
+
+# Runtime data, images of real labels, local databases, logs
+data/
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.log
+
+# Python
+.venv/
+.testenv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Preserved historical files / distribution snapshots
+/archive/
+/artifacts/
+/tmp/
+*.zip
+*.7z
+*.rar
+
+# Local editor / OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.codex/
+.agents/

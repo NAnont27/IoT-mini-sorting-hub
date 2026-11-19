@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1670" viewBox="0 0 1800 1670">
+<style>text{font-family:Tahoma,"Noto Sans Thai",sans-serif} .wire{fill:none;stroke-linejoin:round;stroke-linecap:round}</style>
+<rect width="1800" height="1670" fill="#f6f8fb"/>
+<rect x="25" y="20" width="1750" height="112" rx="18" fill="#173b65" stroke="#cbd5e1" stroke-width="2"/>
+<text x="50" y="67" font-size="32" fill="white" font-weight="700" text-anchor="start">1 / ESP32-S3 — ผัง v2 ใช้ตัวต้านทานแทน PC817</text>
+<text x="50" y="108" font-size="20" fill="#dbeafe" font-weight="400" text-anchor="start">เส้นแต่ละเส้นกำหนดจาก pin map ในโค้ด • ตำแหน่งขาในภาพเป็น breakout เชิงตรรกะ ไม่ใช่ตำแหน่งขาจริงบนบอร์ด</text>
+<rect x="50" y="170" width="330" height="1240" rx="20" fill="#163f34" stroke="#163f34" stroke-width="2"/>
+<text x="215" y="218" font-size="26" fill="white" font-weight="700" text-anchor="middle">ESP32-S3-N16R8</text>
+<text x="215" y="250" font-size="20" fill="#d1fae5" font-weight="400" text-anchor="middle">USB เลี้ยงบอร์ด</text>
+<rect x="110" y="282" width="210" height="75" rx="5" fill="#b8c2c8" stroke="#eef2f7" stroke-width="2"/>
+<text x="215" y="326" font-size="24" fill="#173b65" font-weight="700" text-anchor="middle">ESP32-S3</text>
+<text x="80" y="397" font-size="19" fill="white" font-weight="400" text-anchor="start">อ่านชื่อขาบนบอร์ดจริง</text>
+<text x="100" y="467" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 4</text>
+<circle cx="380" cy="460" r="6" fill="#7c3aed"/>
+<text x="100" y="507" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 5</text>
+<circle cx="380" cy="500" r="6" fill="#7c3aed"/>
+<text x="100" y="577" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 6</text>
+<circle cx="380" cy="570" r="6" fill="#7c3aed"/>
+<text x="100" y="647" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 7</text>
+<circle cx="380" cy="640" r="6" fill="#7c3aed"/>
+<text x="100" y="732" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 8</text>
+<circle cx="380" cy="725" r="6" fill="#7c3aed"/>
+<text x="100" y="772" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 9</text>
+<circle cx="380" cy="765" r="6" fill="#7c3aed"/>
+<text x="100" y="857" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 10</text>
+<circle cx="380" cy="850" r="6" fill="#7c3aed"/>
+<text x="100" y="952" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 11</text>
+<circle cx="380" cy="945" r="6" fill="#7c3aed"/>
+<text x="100" y="1002" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 12</text>
+<circle cx="380" cy="995" r="6" fill="#7c3aed"/>
+<text x="100" y="1052" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 13</text>
+<circle cx="380" cy="1045" r="6" fill="#7c3aed"/>
+<text x="100" y="1102" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 14</text>
+<circle cx="380" cy="1095" r="6" fill="#7c3aed"/>
+<text x="100" y="1197" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 15</text>
+<circle cx="380" cy="1190" r="6" fill="#7c3aed"/>
+<text x="100" y="1262" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 16</text>
+<circle cx="380" cy="1255" r="6" fill="#7c3aed"/>
+<text x="100" y="1327" font-size="22" fill="white" font-weight="700" text-anchor="start">GPIO 17</text>
+<circle cx="380" cy="1320" r="6" fill="#7c3aed"/>
+<rect x="650" y="420" width="1100" height="110" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="680" y="451" font-size="23" fill="#17212b" font-weight="700" text-anchor="start">HX711 + Load cell</text>
+<polyline class="wire" points="380,460 650,460" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="460" r="6" fill="#7c3aed"/>
+<text x="680" y="468" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">DT / DOUT</text>
+<polyline class="wire" points="380,500 650,500" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="500" r="6" fill="#7c3aed"/>
+<text x="680" y="508" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">SCK / CLK</text>
+<rect x="1150" y="442" width="180" height="36" rx="6" fill="#d97706" stroke="#d97706" stroke-width="2"/>
+<text x="1240.0" y="466" font-size="17" fill="white" font-weight="700" text-anchor="middle">VCC → 3V3</text>
+<rect x="1380" y="442" width="180" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1470.0" y="466" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND → GND</text>
+<text x="1150" y="510" font-size="17" fill="#17212b" font-weight="400" text-anchor="start">Load cell: แดง E+ / ดำ E− / เขียว A+ / ขาว A−</text>
+<rect x="650" y="545" width="1100" height="60" rx="12" fill="#fff8ed" stroke="#cbd5e1" stroke-width="2"/>
+<polyline class="wire" points="380,570 650,570" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="570" r="6" fill="#7c3aed"/>
+<text x="680" y="578" font-size="21" fill="#17212b" font-weight="700" text-anchor="start">ส้ม (SIG) · MG90S — Servo ประตู</text>
+<rect x="1150" y="553" width="200" height="36" rx="6" fill="#dc2626" stroke="#dc2626" stroke-width="2"/>
+<text x="1250.0" y="577" font-size="17" fill="white" font-weight="700" text-anchor="middle">แดง → +5V EXT</text>
+<rect x="1380" y="553" width="220" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1490.0" y="577" font-size="17" fill="white" font-weight="700" text-anchor="middle">น้ำตาล → GND</text>
+<rect x="650" y="615" width="1100" height="60" rx="12" fill="#fff8ed" stroke="#cbd5e1" stroke-width="2"/>
+<polyline class="wire" points="380,640 650,640" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="640" r="6" fill="#7c3aed"/>
+<text x="680" y="648" font-size="21" fill="#17212b" font-weight="700" text-anchor="start">ส้ม (SIG) · MG996R — Servo ราง</text>
+<rect x="1150" y="623" width="200" height="36" rx="6" fill="#dc2626" stroke="#dc2626" stroke-width="2"/>
+<text x="1250.0" y="647" font-size="17" fill="white" font-weight="700" text-anchor="middle">แดง → +5V EXT</text>
+<rect x="1380" y="623" width="220" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1490.0" y="647" font-size="17" fill="white" font-weight="700" text-anchor="middle">น้ำตาล → GND</text>
+<rect x="650" y="690" width="1100" height="110" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="1150" y="719" font-size="23" fill="#17212b" font-weight="700" text-anchor="start">VL53L0X / GY-530</text>
+<polyline class="wire" points="380,725 650,725" stroke="#ca8a04" stroke-width="4"/>
+<circle cx="650" cy="725" r="6" fill="#ca8a04"/>
+<text x="680" y="733" font-size="21" fill="#17212b" font-weight="400" text-anchor="start">SDA</text>
+<polyline class="wire" points="380,765 650,765" stroke="#0284c7" stroke-width="4"/>
+<circle cx="650" cy="765" r="6" fill="#0284c7"/>
+<text x="680" y="773" font-size="21" fill="#17212b" font-weight="400" text-anchor="start">SCL</text>
+<rect x="1150" y="742" width="180" height="36" rx="6" fill="#d97706" stroke="#d97706" stroke-width="2"/>
+<text x="1240.0" y="766" font-size="17" fill="white" font-weight="700" text-anchor="middle">VIN → 3V3</text>
+<rect x="1380" y="742" width="180" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1470.0" y="766" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND → GND</text>
+<text x="1150" y="793" font-size="16" fill="#17212b" font-weight="400" text-anchor="start">XSHUT / INT ไม่ต่อ</text>
+<rect x="650" y="825" width="1100" height="65" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<polyline class="wire" points="380,850 720,850" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="720" cy="850" r="6" fill="#7c3aed"/>
+<polyline class="wire" points="720,850 780,850" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="780" cy="850" r="4" fill="#17212b"/>
+<polyline class="wire" points="780,850 810,830" stroke="#17212b" stroke-width="3"/>
+<circle cx="820" cy="850" r="4" fill="#17212b"/>
+<polyline class="wire" points="820,850 870,850" stroke="#17212b" stroke-width="4"/>
+<rect x="870" y="833" width="90" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="915.0" y="857" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND</text>
+<text x="1010" y="858" font-size="21" fill="#17212b" font-weight="400" text-anchor="start">ปุ่ม NO • INPUT_PULLUP • ไม่ต่อ +V</text>
+<rect x="650" y="915" width="1100" height="220" rx="12" fill="#f0f9ff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="1160" y="946" font-size="23" fill="#17212b" font-weight="700" text-anchor="start">E18-D80NK ×4</text>
+<polyline class="wire" points="380,945 650,945" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="945" r="6" fill="#7c3aed"/>
+<text x="680" y="952" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">จุด B ช่อง 1 · INPUT</text>
+<text x="1160" y="990" font-size="19" fill="#17212b" font-weight="400" text-anchor="start">ตัวที่ 1: TRAY EXIT</text>
+<polyline class="wire" points="380,995 650,995" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="995" r="6" fill="#7c3aed"/>
+<text x="680" y="1002" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">จุด B ช่อง 2 · INPUT</text>
+<text x="1160" y="1020" font-size="19" fill="#17212b" font-weight="400" text-anchor="start">ตัวที่ 2: A</text>
+<polyline class="wire" points="380,1045 650,1045" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="1045" r="6" fill="#7c3aed"/>
+<text x="680" y="1052" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">จุด B ช่อง 3 · INPUT</text>
+<text x="1160" y="1050" font-size="19" fill="#17212b" font-weight="400" text-anchor="start">ตัวที่ 3: B</text>
+<polyline class="wire" points="380,1095 650,1095" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="650" cy="1095" r="6" fill="#7c3aed"/>
+<text x="680" y="1102" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">จุด B ช่อง 4 · INPUT</text>
+<text x="1160" y="1080" font-size="19" fill="#17212b" font-weight="400" text-anchor="start">ตัวที่ 4: HOLD</text>
+<text x="1160" y="1118" font-size="18" fill="#173b65" font-weight="700" text-anchor="start">R 1k / 10k / 15k ต่อช่อง — ดูภาพที่ 3</text>
+<rect x="650" y="1157" width="1100" height="61" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<polyline class="wire" points="380,1190 680,1190" stroke="#7c3aed" stroke-width="4"/>
+<polyline class="wire" points="680,1190 700,1190" stroke="#7c3aed" stroke-width="4"/>
+<rect x="700" y="1178" width="100" height="24" rx="3" fill="#fef3c7" stroke="#8a6330" stroke-width="2"/>
+<polyline class="wire" points="800,1190 820,1190" stroke="#7c3aed" stroke-width="4"/>
+<text x="750.0" y="1167" font-size="18" fill="#17212b" font-weight="400" text-anchor="middle">330Ω</text>
+<polyline class="wire" points="820,1190 900,1190" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="925" cy="1190" r="18" fill="#16a34a" stroke="#334155" stroke-width="2"/>
+<polyline class="wire" points="943,1190 1040,1190" stroke="#17212b" stroke-width="4"/>
+<rect x="1040" y="1173" width="90" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1085.0" y="1197" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND</text>
+<text x="1200" y="1198" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">LED เขียว: anode รับจาก R / cathode ไป GND</text>
+<rect x="650" y="1222" width="1100" height="61" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<polyline class="wire" points="380,1255 680,1255" stroke="#7c3aed" stroke-width="4"/>
+<polyline class="wire" points="680,1255 700,1255" stroke="#7c3aed" stroke-width="4"/>
+<rect x="700" y="1243" width="100" height="24" rx="3" fill="#fef3c7" stroke="#8a6330" stroke-width="2"/>
+<polyline class="wire" points="800,1255 820,1255" stroke="#7c3aed" stroke-width="4"/>
+<text x="750.0" y="1232" font-size="18" fill="#17212b" font-weight="400" text-anchor="middle">330Ω</text>
+<polyline class="wire" points="820,1255 900,1255" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="925" cy="1255" r="18" fill="#eab308" stroke="#334155" stroke-width="2"/>
+<polyline class="wire" points="943,1255 1040,1255" stroke="#17212b" stroke-width="4"/>
+<rect x="1040" y="1238" width="90" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1085.0" y="1262" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND</text>
+<text x="1200" y="1263" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">LED เหลือง: anode รับจาก R / cathode ไป GND</text>
+<rect x="650" y="1287" width="1100" height="61" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<polyline class="wire" points="380,1320 680,1320" stroke="#7c3aed" stroke-width="4"/>
+<polyline class="wire" points="680,1320 700,1320" stroke="#7c3aed" stroke-width="4"/>
+<rect x="700" y="1308" width="100" height="24" rx="3" fill="#fef3c7" stroke="#8a6330" stroke-width="2"/>
+<polyline class="wire" points="800,1320 820,1320" stroke="#7c3aed" stroke-width="4"/>
+<text x="750.0" y="1297" font-size="18" fill="#17212b" font-weight="400" text-anchor="middle">330Ω</text>
+<polyline class="wire" points="820,1320 900,1320" stroke="#7c3aed" stroke-width="4"/>
+<circle cx="925" cy="1320" r="18" fill="#dc2626" stroke="#334155" stroke-width="2"/>
+<polyline class="wire" points="943,1320 1040,1320" stroke="#17212b" stroke-width="4"/>
+<rect x="1040" y="1303" width="90" height="36" rx="6" fill="#17212b" stroke="#17212b" stroke-width="2"/>
+<text x="1085.0" y="1327" font-size="17" fill="white" font-weight="700" text-anchor="middle">GND</text>
+<text x="1200" y="1328" font-size="20" fill="#17212b" font-weight="400" text-anchor="start">LED แดง: anode รับจาก R / cathode ไป GND</text>
+<rect x="50" y="1435" width="1700" height="200" rx="12" fill="#fff7ed" stroke="#edbd80" stroke-width="2"/>
+<text x="80" y="1473" font-size="25" fill="#17212b" font-weight="700" text-anchor="start">ไฟเลี้ยงและจุดร่วม — ชื่อ NET เดียวกันภายในภาพนี้คือจุดที่ต่อถึงกัน</text>
+<text x="80" y="1515" font-size="21" fill="#dc2626" font-weight="400" text-anchor="start">+5V EXT = Adapter 5V 5A → แดง Servo ทั้งสอง + น้ำตาล E18 ทั้งสี่ (ต่อขนาน)</text>
+<text x="80" y="1552" font-size="21" fill="#17212b" font-weight="400" text-anchor="start">GND = ลบ Adapter + น้ำตาล Servo + น้ำเงิน E18 + ESP32 GND + Pi pin6</text>
+<text x="80" y="1589" font-size="19" fill="#d97706" font-weight="400" text-anchor="start">3V3 ของ ESP32 → HX711 / ToF • IR ใช้ R จากไฟ 5V • ไม่ผูก 3V3 หรือ +5V ต่างแหล่งเข้าด้วยกัน</text>
+<text x="80" y="1620" font-size="18" fill="#9f1239" font-weight="700" text-anchor="start">ถอดสายพ่วง GPIO6–GPIO7 เดิมออก • ภาพนี้ไม่ใช่ผลจำลอง Tinkercad • ถอดไฟก่อนเปลี่ยนสาย</text>
+</svg>
