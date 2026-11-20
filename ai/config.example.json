@@ -1,0 +1,9 @@
+{
+  "registry_version": "demo-v1",
+  "a_max_floor": 3,
+  "valid_floors": [1, 2, 3, 4, 5, 6],
+  "_comment": "ค่าสมมติสำหรับ demo: valid_floors ต้องมาจากข้อมูลห้อง/ชั้นที่ตรวจแล้ว ไม่ใช่ทะเบียนผู้พัก",
+  "ocr": {"engine": "tesseract"},
+  "api": {"timeout_s": 20, "max_retries": 2},
+  "capture": {"max_attempts": 3}
+}
