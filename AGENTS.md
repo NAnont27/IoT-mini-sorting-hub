@@ -40,10 +40,10 @@
 | HX711 | ⏳ ยังไม่ T/C เพราะไม่มีน้ำหนักอ้างอิงที่ชั่งจริง |
 | AS5600 | ⏳ ยังไม่ `angle_valid` / ยังไม่จำมุม A/B/HOLD |
 | ปุ่ม / LED | ⏳ ยังไม่ยืนยัน |
-| กล้อง / AI | ⏳ ทีม AI push โมดูล `ai/` (extraction, Gemini client, resolver, CLI) ขึ้น `origin/dev` แล้ว — ยังไม่รวมกับ controller |
+| กล้อง / AI | ⏳ โมดูล `ai/` (resolver, extraction, prompt, Gemini client, pipeline, CLI) อยู่บน dev: unittest 77 ผ่าน, เรียก Gemini จริง 1 รอบได้ `RESOLVED`/A (ทีม AI รายงาน) — ยังไม่มี OCR/กล้อง, ยังไม่วัดเวลา, ยังไม่เชื่อม `/api/ai/*` |
 | Flag ทดสอบ | ⚠️ `BENCH_SKIP_SENSOR_CHECKS=1` **ยังเปิดใน `backend/.env` บน Pi** ห้ามใช้ผลระหว่างเปิดเป็นหลักฐาน |
 
-**Git ณ ตอนนี้:** branch `dev` ตาม `origin/dev` อยู่ 8 commits (งานทีม AI); งาน D011 + ปุ่ม Servo + เอกสาร + bench 03c/03d/05b/05c **stage ไว้แล้ว ยังไม่ commit** ผู้ใช้จะ commit เอง และต้องการแยก branch — ดู [Git and Deployment](#git-and-deployment)
+**Git ณ ตอนนี้:** งาน D011 + ปุ่ม Servo + เอกสาร + bench 03c/03d/05b/05c อยู่ใน branch `feature/d011-tray-ir-servo-test` (push แล้ว) กำลัง merge `origin/dev` (งานทีม AI) เข้า แล้วจะ merge เข้า `dev` โดยไม่เปิด PR — ดู [Git and Deployment](#git-and-deployment)
 
 **งานที่เหลือตามลำดับ**
 
