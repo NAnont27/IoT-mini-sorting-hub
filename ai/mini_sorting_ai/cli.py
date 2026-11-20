@@ -65,7 +65,8 @@ def main(argv: list[str] | None = None) -> int:
                                 vision_attempt=args.vision_attempt,
                                 artifacts={"ocr_text_path": str(args.ocr)})
     print(json.dumps(envelope, ensure_ascii=False, indent=2))
-    return 0
+    # exit 1 เมื่อ AI ใช้ไม่ได้ เพื่อให้สคริปต์เรียกใช้แยกความล้มเหลวของบริการออกจากผลตัดสิน
+    return 1 if envelope.get("outcome") == "SERVICE_ERROR" else 0
 
 
 if __name__ == "__main__":

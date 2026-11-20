@@ -77,6 +77,16 @@ class CliTests(unittest.TestCase):
         self.assertEqual((out["outcome"], out["target_bin"]), ("RESOLVED", "A"))
         self.assertEqual(out["extraction_source"], "mock")
 
+    def test_cli_service_error_exits_1(self):
+        # ผลตอบ AI ที่ไม่ใช่ JSON -> SERVICE_ERROR -> exit code 1
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as fh:
+            fh.write("{not json")
+        self.addCleanup(Path(fh.name).unlink, missing_ok=True)
+        code, out = self.run_cli(["--ocr", str(AI_ROOT / "fixtures" / "ocr_demo.txt"),
+                                  "--job-id", "JOB-0001", "--mock-response", fh.name])
+        self.assertEqual(code, 1)
+        self.assertEqual((out["outcome"], out["reason_code"]), ("SERVICE_ERROR", "AI_INVALID_RESPONSE"))
+
     def test_cli_missing_ocr_file_is_pipeline_error(self):
         code, out = self.run_cli(["--ocr", "no-such-file.txt", "--job-id", "JOB-0001"])
         self.assertEqual(code, 2)
