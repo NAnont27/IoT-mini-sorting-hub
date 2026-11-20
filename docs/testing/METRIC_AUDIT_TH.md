@@ -21,7 +21,7 @@
 
 | ข้อ | คะแนน | เกณฑ์ | สิ่งที่พบ / สถานะ | หลักฐานที่ยังต้องมี |
 |---|---:|---|---|---|
-| 1 | 1 | เซนเซอร์ต่างชนิดอย่างน้อย 5 | มีแบบ/โค้ด: Load cell, E18, VL53L0X, AS5600, BH1750; E18 4 ตัวนับชนิดเดียว ไม่ใช้กล้อง/Servo/ปุ่มเพิ่มจำนวน | อ่านค่าจริงทั้งห้าชนิดในระบบเดียว |
+| 1 | 1 | เซนเซอร์ต่างชนิดอย่างน้อย 5 | มีแบบ/โค้ด: Load cell, E18, VL53L0X, AS5600, BH1750; E18 ตัวเดียวที่ถาดตาม D011 ไม่ใช้กล้อง/Servo/ปุ่มเพิ่มจำนวน | อ่านค่าจริงทั้งห้าชนิดในระบบเดียว |
 | 2 | 1 | I2C อย่างน้อย 1 | มีโค้ด: ToF บน ESP32, AS5600/BH1750 บน Pi | แสดงวงจรและอ่านข้อมูลจริง ไม่ใช้ scan address อย่างเดียว |
 | 3 | 1 | Sensor Node อย่างน้อย 2 sensors | ESP32 มี Load cell+HX711, ToF และ E18; มีเกินขั้นต่ำ | Node ส่งข้อมูลเซนเซอร์จริงเข้า backend |
 | 4 | 1 | Gateway อย่างน้อย 2 sensors | Pi อ่าน AS5600 และ BH1750 โดยตรงใน gateway_sensors.py | แสดงค่าจริงของสองตัวผ่าน Gateway พร้อมกัน |
@@ -64,7 +64,7 @@ PDF ระบุส่ง slides และ video ใน myCourseVille **9 ธั
 |---|---|---|---|
 | sorter/weight | Load cell ผ่าน HX711 | ESP32 → Pi backend | น้ำหนัก g, valid, stable; วาง/ยกน้ำหนักให้ค่าจริงเปลี่ยน ใช้สร้าง job เมื่อนิ่ง |
 | sorter/height | VL53L0X | ESP32 → Pi backend | distance_mm/height_mm/valid; เปลี่ยนระยะหรือกล่องเพื่อให้เห็นต้นทางอิสระจากน้ำหนัก |
-| sorter/passage | E18-D80NK | ESP32 → Pi backend | active ของ tray_exit/A/B/HOLD และ events; บังเซนเซอร์แล้วให้ backend รับการเปลี่ยนจริง |
+| sorter/passage | E18-D80NK | ESP32 → Pi backend | active ของ `tray` (D011) และ events; วาง/ยกกล่องแล้วให้ backend รับการเปลี่ยนจริง |
 | sorter/gateway | AS5600 + BH1750 | Pi gateway process → Pi backend ผ่าน broker | angle_deg/light_lux และ valid; หมุนแม่เหล็ก/เปลี่ยนแสงให้เห็นข้อมูล Gateway จริง |
 
 สามรายการแรกมาจาก sensor sources คนละชนิด ไม่ใช่สร้างสามชื่อให้ค่าตัวเดียว นี่เป็นหลักฐานหลักที่แข็งแรงกว่าการนับ sorter/cmd, sorter/ack หรือ sorter/status ซึ่งเป็น control/status topics

@@ -5,6 +5,7 @@ import { api } from "@/lib/api/client";
 import type { HubSnapshot, TargetBin } from "@/types/hub";
 import { HistoryPanel } from "./HistoryPanel";
 import { JobsPanel } from "./JobsPanel";
+import { ServoTestPanel } from "./ServoTestPanel";
 import { SettingsPanel } from "./SettingsPanel";
 
 const stateLabels: Record<string, string> = {
@@ -71,7 +72,7 @@ export function Dashboard() {
     try {
       const next = await api<HubSnapshot>(path, body);
       setSnapshot(next); setLastUpdated(new Date());
-      setNotice("ส่งคำขอแล้ว — ระบบจะยืนยันผลจากมุมรางและ IR ก่อนนับว่าสำเร็จ");
+      setNotice("ส่งคำขอแล้ว — ระบบจะยืนยันมุมราง และนับสำเร็จเมื่อกล่องออกจากถาดแล้ว");
     } catch (error) { setActionError(error instanceof Error ? error.message : "ส่งคำขอไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
@@ -83,7 +84,9 @@ export function Dashboard() {
   const gateway = snapshot?.latest["sorter/gateway"];
   const passage = snapshot?.latest["sorter/passage"];
   const active = passage?.active as Record<string, unknown> | undefined;
-  const routeClear = active ? ["tray_exit", "A", "B", "HOLD"].every((key) => active[key] === false) : false;
+  // D011: one tray IR only (true = parcel on tray). Destination bins are not sensed.
+  const trayIr = active ? active["tray"] : undefined;
+  const routeClear = trayIr === false;
   const currentState = snapshot?.state ?? "CONNECTING";
   const readinessErrors = snapshot?.readiness_errors ?? [];
   const statusTone = !connected ? "neutral" : currentState === "FAULT" || currentState === "PAUSED_AI" ? "danger" : readinessErrors.length ? "warning" : "success";
@@ -116,13 +119,14 @@ export function Dashboard() {
         <article className={`hero-card tone-${statusTone}`}>
           <div className="hero-head"><span className="card-kicker">สถานะระบบ</span><span className="state-code">{currentState}</span></div>
           <div className="state-lockup"><span className="state-orb"><i /></span><div><h2>{stateLabels[currentState] ?? currentState}</h2><p>{readinessErrors.length ? `พบ ${readinessErrors.length} เงื่อนไขที่ต้องตรวจ` : "เซนเซอร์และเส้นทางพร้อมสำหรับขั้นตอนปัจจุบัน"}</p></div></div>
-          <div className="hero-metrics"><div><span>เซนเซอร์พร้อม</span><strong>{sensorCount}<small>/5</small></strong></div><div><span>เส้นทาง</span><strong>{routeClear ? "ว่าง" : "ตรวจสอบ"}</strong></div><div><span>ฐานข้อมูล</span><strong>{snapshot?.influx_status === "OK" ? "Influx OK" : "ดูสถานะ"}</strong></div></div>
+          <div className="hero-metrics"><div><span>เซนเซอร์พร้อม</span><strong>{sensorCount}<small>/5</small></strong></div><div><span>ถาด</span><strong>{trayIr === true ? "มีกล่อง" : routeClear ? "ว่าง" : "ตรวจสอบ"}</strong></div><div><span>ฐานข้อมูล</span><strong>{snapshot?.influx_status === "OK" ? "Influx OK" : "ดูสถานะ"}</strong></div></div>
         </article>
         <article className="control-card">
           <div className="card-heading"><div><span className="card-kicker">ควบคุมเครื่อง</span><h2>การทำงานหลัก</h2></div>{busy && <span className="working">กำลังส่ง…</span>}</div>
           <div className="control-buttons"><button className="button primary" disabled={disabled} onClick={() => void control("resume")}><span className="button-icon play" />เริ่ม / ทำงานต่อ</button><button className="button secondary" disabled={disabled} onClick={() => void control("pause")}><span className="button-icon pause" />พักรับงาน</button></div>
           <div className="control-secondary"><button className="text-button" disabled={disabled || currentState !== "PAUSED_AI"} onClick={() => void control("retry_ai")}>ลอง AI ใหม่</button><button className="text-button danger-text" disabled={disabled || currentState !== "FAULT"} onClick={() => { if (window.confirm("เอากล่องออกจากถาดและเคลียร์เส้นทางทุกจุดแล้วใช่ไหม?")) void control("reset"); }}>เคลียร์ Fault แล้ว</button></div>
-          <p className="control-note"><span>!</span> ACK จาก Servo ยังไม่ใช่ผลคัดสำเร็จ ระบบต้องรอ IR ยืนยันช่องปลายทาง</p>
+          <p className="control-note"><span>!</span> ACK จาก Servo ยังไม่ใช่ผลคัดสำเร็จ ระบบนับสำเร็จเมื่อ IR ถาดว่างและน้ำหนักกลับศูนย์ (ไม่มีเซนเซอร์ยืนยันช่องปลายทาง)</p>
+          <ServoTestPanel enabled={!disabled && currentState === "PAUSED_OPERATOR" && !snapshot?.job} onSend={(servo, angle) => void act("/api/control", { action: "servo_test", servo, angle })} />
         </article>
       </section>
 
@@ -133,7 +137,7 @@ export function Dashboard() {
         <SensorCard label="ความสูงพัสดุ" value={numberValue(height, "height_mm", 0)} unit="mm" valid={heightReady} detail="VL53L0X · ESP32"><span className="ruler-symbol" /></SensorCard>
         <SensorCard label="มุมราง" value={numberValue(gateway, "angle_deg")} unit="°" valid={angleReady} detail="AS5600 · Raspberry Pi"><span className="angle-symbol" /></SensorCard>
         <SensorCard label="ความสว่าง" value={numberValue(gateway, "light_lux", 0)} unit="lux" valid={lightReady} detail="BH1750 · Raspberry Pi"><span className="sun-symbol">✦</span></SensorCard>
-        <SensorCard label="ทางผ่าน IR" value={routeClear ? "ว่าง" : "ตรวจ"} unit="" valid={passageReady} detail="ถาด + A + B + HOLD"><span className="beam-symbol" /></SensorCard>
+        <SensorCard label="IR ถาด" value={trayIr === true ? "มีกล่อง" : routeClear ? "ว่าง" : "ตรวจ"} unit="" valid={passageReady} detail="E18 จุดวางกล่อง (GPIO11)"><span className="beam-symbol" /></SensorCard>
       </div></section>
 
       <section id="current-job" className="content-section" aria-labelledby="job-title"><div className="section-heading"><div><p className="eyebrow">ACTIVE PARCEL</p><h2 id="job-title">งานปัจจุบัน</h2></div>{job && <code className="job-id">{job.job_id}</code>}</div><div className="job-layout">
