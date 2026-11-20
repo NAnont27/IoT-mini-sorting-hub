@@ -2,6 +2,8 @@
 
 วันที่ 11 พฤศจิกายน 2026
 
+> แผนตั้งต้นเก่า: ส่วนที่อ้าง IR สี่ตัว (tray_exit/A/B/HOLD) และ MISROUTE ถูกแทนด้วย D011 (20 พ.ย. 2026) ใช้ E18 ตัวเดียวที่ถาด ดูสถานะปัจจุบันใน `docs/setup/BENCH_SETUP_TH.md` และ `AGENTS.md`
+
 อ้างอิงหลัก: [เอกสารโปรเจกต์ฉบับรวม](PROJECT_BRIEF_TH.md)
 ส่งต่อ AI: [Prompt ทีม AI](../ai/AI_TEAM_HANDOFF_PROMPT_TH.md)
 
@@ -19,7 +21,7 @@
 
 | คน | งานหลัก | ชิ้นส่งมอบ |
 |---|---|---|
-| H1: Sensor node | ESP32, HX711/load cell, VL53L0X, IR สี่ตัว, MQTT telemetry | โปรแกรมทดสอบรายชิ้น + firmware อ่านเซนเซอร์ |
+| H1: Sensor node | ESP32, HX711/load cell, VL53L0X, IR (เดิมสี่ตัว; ปัจจุบัน 1 ตัวตาม D011), MQTT telemetry | โปรแกรมทดสอบรายชิ้น + firmware อ่านเซนเซอร์ |
 | H2: Actuation/Gateway | Servo สองตัว, ไฟ/ปุ่ม, AS5600 และ BH1750 บน Pi | โมดูล actuator สำหรับรวม firmware กับ H1 + Pi sensor service + ผังไฟ |
 | H3: System | Mosquitto, Backend/state machine, InfluxDB, job store, API/เว็บ | รับข้อมูล สั่งงาน เก็บ/ค้นประวัติ และเว็บพื้นฐาน |
 

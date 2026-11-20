@@ -1,11 +1,13 @@
 """Single-owner state machine. It never treats a command ACK as a parcel arrival."""
 import copy
+import os
 import time
 import uuid
 
 from .store import utc_now
 
 BINS = ("A", "B", "HOLD")
+TRAY_IR = "tray"  # D011: one E18 on GPIO11 detects the parcel when it is placed.
 TERMINAL = {"FAULT", "PAUSED_AI", "RESETTING"}
 
 
@@ -104,14 +106,26 @@ class Controller:
                 errors.append("Height exceeds bench limit")
         if any(c["target_angles_deg"].get(b) is None for b in BINS):
             errors.append("Save measured angle for A/B/HOLD first")
+        # TEMPORARY front/back connection test only. Set BENCH_SKIP_SENSOR_CHECKS=1
+        # in backend/.env to ignore sensor/calibration readiness; MQTT must still be up.
+        # Remove/unset before any real BENCH run: servos can move without valid feedback.
+        if os.environ.get("BENCH_SKIP_SENSOR_CHECKS") == "1":
+            return [e for e in errors if e == "MQTT disconnected"]
         return errors
 
+    def _tray_ir(self):
+        """Single E18 at the tray (D011): True=parcel seen, False=clear, None=stale/missing."""
+        if not self.fresh("sorter/passage", self.config["node_stale_s"]):
+            return None
+        value = self.data("sorter/passage").get("active", {}).get(TRAY_IR)
+        return value if isinstance(value, bool) else None
+
+    def tray_present(self):
+        return self._tray_ir() is True
+
     def route_clear(self):
-        passage = self.data("sorter/passage")
-        active = passage.get("active", {})
-        return (self.fresh("sorter/passage", self.config["node_stale_s"])
-                and all(name in active and active[name] is False
-                        for name in ("tray_exit", *BINS)))
+        # D011: only the tray IR exists; destination bins are not sensed.
+        return self._tray_ir() is False
 
     def empty(self):
         weight = self.data("sorter/weight")
@@ -204,17 +218,10 @@ class Controller:
                 or event.get("job_id") != self.job["job_id"]
                 or not event.get("after_release")):
             return
-        sensor = event.get("sensor")
-        if sensor == "tray_exit":
+        if event.get("sensor") == TRAY_IR:
+            # Informational only; completion is decided from the current IR + weight state.
             self.job["tray_seen"] = True
-        elif sensor in BINS:
-            if sensor != self.job["target_bin"]:
-                self.fail("MISROUTE", result="MISROUTE")
-            elif not self.job.get("tray_seen"):
-                self.fail("BIN_BEFORE_TRAY_EXIT")
-            else:
-                self.job["bin_seen"] = True
-        self._save()
+            self._save()
 
     def fail(self, reason, result="FAULT"):
         if not self.job or self.job["state"] == "FAULT":
@@ -249,7 +256,7 @@ class Controller:
             if not self.job or self.job["state"] not in {"FAULT", "PAUSED_AI"}:
                 raise ValueError("No fault/AI pause to clear")
             if not self.route_clear() or not self.empty():
-                raise ValueError("Remove parcel; all IR paths and weighing tray must be clear")
+                raise ValueError("Remove parcel; tray IR and weighing tray must be clear")
             self.pending = None
             self.state("RESETTING")
             try:
@@ -257,6 +264,18 @@ class Controller:
             except ValueError:
                 self.state("FAULT")
                 raise
+        elif action == "servo_test":
+            # Manual bench test only: never while a job exists or the machine accepts parcels.
+            if self.job or not self.paused:
+                raise ValueError("Servo test needs PAUSED_OPERATOR and no active job")
+            servo, angle = values.get("servo"), values.get("angle")
+            if servo not in {"gate", "chute"}:
+                raise ValueError("servo must be gate or chute")
+            if isinstance(angle, bool) or not isinstance(angle, int) or not 0 <= angle <= 180:
+                raise ValueError("angle must be an integer 0-180")
+            # Fire-and-forget: ACK only means the command was applied, not a verified angle.
+            self._send("SERVO_TEST", servo=servo, angle=angle)
+            self.store.event("operator/servo_test", {"servo": servo, "angle": angle})
         elif action == "retry_ai":
             if not self.job or self.job["state"] != "PAUSED_AI":
                 raise ValueError("No AI pause")
@@ -319,17 +338,19 @@ class Controller:
                 self.fail("COMMAND_TIMEOUT")
         errors = self.checks()
         if not self.job:
-            if self.paused or errors or not self.route_clear():
+            if self.paused or errors or self._tray_ir() is None:
                 return
             w, h = self.data("sorter/weight"), self.data("sorter/height")
-            if w.get("weight_g", 0) < self.config["min_weight_g"] or not w.get("stable"):
+            # D011: a job starts only when the tray IR sees the parcel AND weight is stable.
+            if (not self.tray_present() or w.get("weight_g", 0) < self.config["min_weight_g"]
+                    or not w.get("stable")):
                 return
             if w["weight_g"] > self.config["max_weight_g"] or h["height_mm"] > self.config["max_height_mm"]:
                 return  # Visible blocked reason in snapshot; never release oversized load.
             self.job = {"job_id": "JOB-" + uuid.uuid4().hex[:12], "created": utc_now(),
                         "mode": self.config["mode"], "passage_simulated": True,
                         "weight_g": w["weight_g"], "height_mm": h["height_mm"],
-                        "vision_attempt": 1, "tray_seen": False, "bin_seen": False,
+                        "vision_attempt": 1, "tray_seen": False, "destination_sensed": False,
                         "result": None, "config_snapshot": copy.deepcopy(self.config)}
             self.events_seen.clear()
             self.state("WAIT_DECISION" if self.config["mode"] == "bench" else "WAIT_VISION")
@@ -343,7 +364,8 @@ class Controller:
         age = now - self.job["stage_started"]
         if state in {"RELEASE", "VERIFY_EXIT", "WAIT_CLEAR"}:
             # After release, operator pause only affects the NEXT parcel.
-            if self.job.get("bin_seen") and state != "WAIT_CLEAR" and not self.pending:
+            # D011: no bin IR, so "left the tray" (IR clear + weight empty) ends the job.
+            if state == "VERIFY_EXIT" and self.route_clear() and self.empty() and not self.pending:
                 self.state("WAIT_CLEAR")
             if self.job["state"] == "WAIT_CLEAR" and self.route_clear() and self.empty() and not self.pending:
                 self.state("CLOSING")
@@ -368,8 +390,8 @@ class Controller:
                 if self.angle_since is None:
                     self.angle_since = now
                 if now - self.angle_since >= self.config["angle_dwell_s"] and not self.pending:
-                    if not self.route_clear():
-                        self.fail("PATH_BLOCKED_BEFORE_RELEASE")
+                    if not self.tray_present():
+                        self.fail("PARCEL_MISSING_BEFORE_RELEASE")
                         return
                     self.state("RELEASE")
                     self.command("RELEASE", target_bin=self.job["target_bin"], angle_verified=True)
@@ -383,7 +405,7 @@ class Controller:
             return "PAUSED_AI"
         if self.paused:
             return "PAUSED_OPERATOR"
-        return self.job["state"] if self.job else ("BLOCKED" if self.checks() or not self.route_clear() else "IDLE")
+        return self.job["state"] if self.job else ("BLOCKED" if self.checks() or self._tray_ir() is None else "IDLE")
 
     def snapshot(self):
         errors = self.checks()
