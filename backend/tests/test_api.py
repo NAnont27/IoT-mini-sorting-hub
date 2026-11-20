@@ -34,6 +34,8 @@ class ApiTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["service"], "mini-sorting-hub-backend")
+        self.assertEqual(response.json["api_version"], 1)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
 
     def test_status_is_paused_and_reports_missing_hardware(self):
         response = self.client.get("/api/status")
@@ -50,12 +52,34 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json)
 
+    def test_write_endpoints_require_json_objects(self):
+        response = self.client.post("/api/control", data="[]", content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json["error"], "Request body must be a JSON object")
+
+        response = self.client.post("/api/control", json={})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json["error"], "action is required")
+
     def test_settings_are_saved_under_backend_directory(self):
         response = self.client.post("/api/settings", json={"max_weight_g": 500, "max_height_mm": 200})
         self.assertEqual(response.status_code, 200)
         saved = json.loads((Path(self.directory.name) / "config.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["max_weight_g"], 500)
         self.assertEqual(saved["max_height_mm"], 200)
+
+    def test_settings_reject_unknown_fields(self):
+        response = self.client.post("/api/settings", json={"bypass_interlock": True})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Unknown settings", response.json["error"])
+
+    def test_job_search_is_trimmed_and_bounded(self):
+        response = self.client.get("/api/jobs?q=%20JOB-1%20")
+        self.assertEqual(response.status_code, 200)
+        hub.Store.return_value.jobs.assert_called_with("JOB-1")
+
+        response = self.client.get("/api/jobs?q=" + "x" * 121)
+        self.assertEqual(response.status_code, 400)
 
 
 if __name__ == "__main__":

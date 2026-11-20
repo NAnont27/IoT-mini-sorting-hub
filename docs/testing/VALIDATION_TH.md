@@ -1,22 +1,23 @@
 # สถานะการตรวจ Mini Sorting Hub
 
-อัปเดต **16 พฤศจิกายน 2026** หลังจัด monorepo และย้ายหน้าเว็บเป็น Next.js
+อัปเดต **20 พฤศจิกายน 2026** หลังปรับ operator console และเพิ่ม HTTP boundary validation
 
 ## ตรวจผ่านในเครื่องพัฒนา Windows
 
 | การตรวจ | ผลและขอบเขต |
 |---|---|
-| Backend unittest | **28 ผ่าน**: state machine 20 + คำนวณวงจร R 3 + HTTP API/package migration 5 |
-| Frontend lint | npm run lint ผ่าน |
+| Backend unittest | **31 ผ่าน**: state machine 20 + คำนวณวงจร R 3 + HTTP API/package/boundary validation 8 |
+| Frontend lint | npm run lint ผ่าน ไม่มี error/warning |
 | Frontend TypeScript | npm run typecheck ผ่าน และตรวจ TypeScript ระหว่าง build ผ่าน |
 | Production build | npm run build ผ่านด้วย Next.js 16.4.6, React 19.3.0, Webpack และ Tailwind PostCSS |
+| Local HTTP preview | Next.js dev server ตอบ `GET /` เป็น 200; เครื่องมือ browser preview หมดเวลาจึงยังไม่มี screenshot/visual QA จาก browser ในรอบ 20 พ.ย. |
 | Production HTTP smoke | หน้า HTML และ /api proxy จาก Next.js :3000 ไป Flask :5000 ผ่าน GET/POST: status, pause, resume ถูกบล็อกเมื่อไม่มีเซนเซอร์, jobs, history fallback และ AI pending |
 | เอกสาร | ตรวจ UTF-8, code fences และ local Markdown links ไม่มีพาธหาย |
 | Git ignore | ตัด .env/config จริง/secrets.h, data, .venv, node_modules, .next, archive และ artifacts; ไฟล์ example/lockfileเข้า Git ได้ |
 
 HTTP smoke ใช้ Flask API และ SQLite ชั่วคราวจริง แต่ **mock MQTT client และหยุด background workers** ไม่เชื่อมต่อ Pi/ESP32 หรือเปิดมอเตอร์ เซิร์ฟเวอร์ทดสอบหยุดหลังตรวจแล้ว
 
-Tests state machine ตรวจ ACK ไม่เท่ากับถึงช่อง, มุมผิด/เก่า, กล่องผิดช่อง/ผิดลำดับ, pause, Node reboot, timeout, duplicate passage, reset ขณะยังมีของ, AI outage และผล AI เก่า ส่วน API tests ตรวจ entry point ใหม่, status, pending, readiness และการบันทึก settings ใน backend
+Tests state machine ตรวจ ACK ไม่เท่ากับถึงช่อง, มุมผิด/เก่า, กล่องผิดช่อง/ผิดลำดับ, pause, Node reboot, timeout, duplicate passage, reset ขณะยังมีของ, AI outage และผล AI เก่า ส่วน API tests ตรวจ entry point, status, pending, readiness, การบันทึก settings, JSON body, action ที่ขาด, setting ที่ไม่รู้จัก และขอบเขตคำค้น
 
 ## ข้อจำกัดการ build และ dependency
 
@@ -29,7 +30,7 @@ Tests state machine ตรวจ ACK ไม่เท่ากับถึงช�
 - compile/upload firmware ด้วย Arduino toolchain และ libraries จริง
 - Pi–Mosquitto–InfluxDB–ESP32 ผ่าน Wi-Fi/MQTT ทั้งระบบ; HTTP smoke ด้านบนไม่ใช่ผล integration นี้
 - การวัดแรงดัน IR, calibration, ToF, การรับโหลด Servo และ IR สี่ตัวพร้อมกัน
-- การย้าย config/data จริงจาก Pi เดิมและรัน Next.js production บน Pi
+- การย้าย config/data จริงจาก Pi เดิม และการเชื่อม Next.js บนคอมไป Flask บน Pi ผ่าน LAN จริง
 - กล้อง/OCR/Gemini/resolver/CSV และการคัดกล่องด้วยโครงจริง
 - ความแม่นยำ เวลา throughput และผลเทียบการคัดโดยเจ้าหน้าที่
 

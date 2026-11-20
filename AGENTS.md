@@ -12,9 +12,10 @@
 
 **Metric audit ล่าสุด 16 พ.ย.:** อ่าน `docs/testing/METRIC_AUDIT_TH.md` ก่อนอ้างความครบเกณฑ์ MQTT มี weight/height/passage จากสาม sensor sources และ gateway เพิ่ม; local broker บน Pi และ frontend บนคอมตรงรูปแบบที่ rubric อนุญาต แต่ยังไม่มีหลักฐาน MQTT/Influx/ฮาร์ดแวร์ครบจริง และใน workspace ยังขาด camera/OCR/Gemini ที่รวมใช้งาน ผล FPS/Accuracy และ slides/video จึงไม่อ้างว่าผ่านครบ 25 คะแนน
 
-อัปเดต 16 พฤศจิกายน 2026 หลังผู้ใช้ถามว่าโฟลเดอร์ใดต้องนำเข้า Pi และขอให้อัปเดตบันทึก
+อัปเดต 20 พฤศจิกายน 2026 หลังผู้ใช้ขอให้อ่าน README และสร้าง frontend/backend ตามข้อกำหนด
 
-- จัด source เป็น monorepo แล้ว: frontend / backend / gateway / firmware / docs; frontend เปลี่ยนเป็น Next.js ตามที่ผู้ใช้เลือก ส่วน Flask, MQTT, Database และผัง GPIO คงเดิม
+- ปรับ frontend จากหน้า BENCH แบบเรียบเป็น operator console responsive โดยยังใช้ Next.js App Router, polling และ `/api` proxy เดิม: มี status/readiness, telemetry 5 กลุ่ม, control, job routing A/B/HOLD, settings, history และ jobs
+- Backend ยังคง Flask/Paho/SQLite/InfluxDB/controller เดิม เพิ่ม boundary validation สำหรับ JSON object, action/settings และคำค้น พร้อม no-store/nosniff headers; ไม่เปลี่ยน state machine, MQTT schema, GPIO หรือ interlock
 - **ผู้ใช้ยืนยันให้ frontend รันบนคอม และ backend/gateway รันบน Pi** (D010) จึงส่ง source `backend/` กับ `gateway/` ไปวางใต้ `~/mini-sorting-hub/`; docs/README/AGENTS ส่งเป็นคู่มือได้ ไม่ต้องส่ง frontend ไป Pi
 - **firmware อยู่บนคอมเพื่อ Upload เข้า ESP32** ไม่ใช่โปรแกรมที่ต้องสั่งรันบน Pi; การส่ง source ไป Pi ไม่เปลี่ยน firmware บนบอร์ด
 - Pi ใช้ Python .venv สำหรับ backend/gateway; Node.js/npm, node_modules และ .next อยู่บนคอมที่รัน frontend ไม่ติดตั้ง Next.js บน Pi และไม่ส่ง Windows .venv หรือ archive/artifacts ไปเป็น runtime
@@ -22,8 +23,8 @@
 - หน้าเว็บ Next.js อยู่พอร์ต 3000; Flask API พอร์ต 5000; backend/gateway ใช้ .env แยกกัน ส่วน frontend ใช้ .env.local และ BACKEND_URL ฝั่ง server
 - **ยังไม่มีหลักฐานว่าส่ง source โครงใหม่ขึ้น Pi แล้ว** หรือย้าย config/data เดิมแล้ว ไม่ให้ถือว่าการจัดไฟล์ในคอมเท่ากับ deploy สำเร็จ
 - ZIP v1/v2 ใน artifacts/legacy เป็นชุดโครงเก่า ยังไม่มี ZIP รุ่นใหม่จาก monorepo นี้ หากจะส่งต้องเตรียมจาก source ปัจจุบันและรักษาค่า/ข้อมูลจริงเดิมบน Pi
-- Git เป็น local branch main มี 82 ไฟล์ staged ยังไม่มี commit/remote/push; การแก้ AGENTS.md หลัง staging เป็น working-tree change ต้อง stage ใหม่เมื่อต้องการรวมใน commit
-- ผลตรวจ source ล่าสุดคือ backend 28 tests และ frontend lint/typecheck/build/HTTP proxy smoke ผ่าน โดย HTTP smoke ใช้ mock MQTT ไม่มีการยืนยันฮาร์ดแวร์รวมจริง
+- Git ปัจจุบันอยู่ branch `main` ที่ commit `b6ce55d` และมี `origin`; ไฟล์แก้รอบนี้ยังไม่ commit/push และ `package-lock.json` ที่รากเป็นไฟล์ untracked เดิมของผู้ใช้ ไม่ได้แก้
+- ผลตรวจล่าสุด: backend **31 tests ผ่าน**, frontend lint/typecheck/production build ผ่าน และ dev server ตอบ GET `/` 200; browser preview tool timeout จึงยังไม่มี screenshot visual QA และไม่มีการยืนยัน Pi/MQTT/Influx/ESP32/กลไกจริง
 - งานถัดไปให้ยึดคำขอผู้ใช้: ถ้าสั่งส่งขึ้น Pi ให้ใช้ `docs/setup/MIGRATION_TH.md` และ `docs/setup/BENCH_SETUP_TH.md` ก่อนเริ่มโปรแกรม ไม่เปลี่ยน requirement หรือวนทดสอบชิ้นที่ยืนยันแล้วโดยไม่มีเหตุ
 
 ## Project Overview
@@ -517,3 +518,7 @@ Checkpoint นี้แยก **สิ่งที่มีใน source** อ�
 | 20 พ.ย. 2026 | อธิบาย E18 เมื่อไม่ต่อสายดำ OUT: ตรวจ LED บนตัวได้ แต่ไม่มีสัญญาณตรวจจับถึง ESP32; แยก GPIO ลอยกับ R v2 ที่ pull-up อยู่ | AGENTS.md — Hardware | อ้างผัง E18/วงจร v2 ที่ยืนยันในแชต เป็นคำอธิบาย ไม่ต่อสายหรือทดสอบของจริงเพิ่ม | เมื่อต้องอ่านบน ESP32 ให้ต่อ OUT ผ่าน R v2 และวัดแรงดันตามคู่มือ |
 | 20 พ.ย. 2026 | อธิบายความเสี่ยงสายดำ E18 ต่อ GPIO ตรง: OUT อาจมี pull-up/ระดับ 5V ที่ยังไม่ยืนยัน; แยก open-collector ที่ตรวจแล้วออกจากการเดาจากชื่อ NPN และคง R v2 | AGENTS.md — Hardware | ตรวจเอกสาร Espressif เรื่องขา ESP32-S3 ไม่ทน 5V; ไม่วัด OUT จริง ไม่เปลี่ยนสาย/โค้ด | ใช้ R v2 เดิมและวัดจุด B ก่อนเข้า GPIO; ไม่ใช้ผลอ่านได้แทนหลักฐานแรงดัน |
 | 20 พ.ย. 2026 | ผู้ใช้ขอวิธีเอา folder ขึ้น Git ตรวจสถานะจริงและปรับคู่มือ commit/สร้าง repo เปล่า/login/remote/push สำหรับ Project เดิม ไม่ต้อง init ซ้ำ | docs/setup/GIT_TH.md; AGENTS.md | main ไม่มี commit/remote, 82 staged และมีการแก้หลัง stage; identity ตั้งแล้ว; ตรวจวิธีตาม GitHub Docs ไม่ stage/commit/push แทน | ผู้ใช้สร้าง repo และใช้ URL จริงตามคู่มือ; เพิ่มไฟล์ล่าสุดก่อน commit และไม่เพิ่มค่าลับ |
+| 20 พ.ย. 2026 | อ่าน README/ข้อกำหนดและสร้าง frontend/backend ต่อจาก source ปัจจุบัน: ปรับ operator console responsive, telemetry/job/control/settings/history และเพิ่ม Flask JSON/action/settings/search validation โดยคง architecture/interlock เดิม | frontend app/dashboard/styles/README; backend hub/tests/README; VALIDATION_TH.md; AGENTS.md | backend 31 tests, frontend lint/typecheck/build ผ่าน; dev GET `/` 200; browser preview tool timeout จึงไม่มี screenshot และไม่ทดสอบ Pi/MQTT/Influx/ESP32/กลไกจริง; ไม่แตะ root package-lock.json ของผู้ใช้ | เชื่อม frontend บนคอมกับ Flask บน Pi แล้วทดสอบ BENCH flow/hardware ตามคู่มือ; ทำ visual QA ใน browser จริงเมื่อเครื่องมือพร้อม |
+| 20 พ.ย. 2026 | อธิบายวิธีรันผ่าน VS Code ตาม D010: frontend ใน terminal บนคอม และ backend/gateway ใน SSH terminals ไป Pi พร้อมตรวจพอร์ต 5000/หน้า 3000 | AGENTS.md; ใช้คำสั่งจาก README และ BENCH_SETUP_TH.md โดยไม่เปลี่ยน source/architecture | เป็นคู่มือการรัน ไม่ได้สั่ง deploy หรือเปิด Pi/MQTT/Influx/ESP32 จริงในรอบนี้; ต้องมี source/config/.env/.venv บน Pi ก่อน | ผู้ใช้รันทีละ terminal และแจ้งข้อความ error/ผล `/api/status` หากติดขั้นใด |
+| 20 พ.ย. 2026 | วินิจฉัย `npm ci` ENOENT ใน VS Code: ผู้ใช้รันจากราก repo ซึ่งไม่มี package.json และ Copy-Item env จากตำแหน่งผิด; ยืนยัน package/package-lock/.env.example อยู่ใต้ frontend | AGENTS.md; ไม่เปลี่ยน source/runtime | ตรวจ path จริงด้วย Test-Path: root package/env example ไม่มี, frontend มี package และ env example, frontend/.env.local ยังไม่มี; Python .venv ไม่เกี่ยวกับ npm | เข้า `frontend`, คัดลอก `.env.example` เป็น `.env.local`, ตั้ง BACKEND_URL แล้วรัน npm ci/dev |
+| 20 พ.ย. 2026 | อธิบายวิธีเปิด Flask backend ตาม D010 ผ่าน VS Code SSH ไป Pi, ตรวจ source/config/env และตรวจ `/api/status`; ย้ำรัน instance เดียว | AGENTS.md; คำสั่งอิง backend README/BENCH setup ไม่เปลี่ยน source | เป็นคำแนะนำ ยังไม่ได้ SSH หรือเปิด service บน Pi จริง และไม่ทราบชื่อผู้ใช้ SSH/สถานะ config ของ Pi | ผู้ใช้รันบน Pi แล้วส่งผล `ls backend` หรือ error จาก `.venv/bin/python -m backend.app` หากติดขัด |

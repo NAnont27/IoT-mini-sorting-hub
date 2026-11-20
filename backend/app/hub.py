@@ -21,6 +21,14 @@ load_dotenv(ROOT / ".env")
 logging.basicConfig(level=logging.INFO)
 
 
+def _json_object():
+    """Return a JSON object or a traceable 400 error for every write endpoint."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        raise ValueError("Request body must be a JSON object")
+    return data
+
+
 def build_app():
     config_path = ROOT / "config.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
@@ -86,8 +94,12 @@ def build_app():
 
     @app.get("/")
     def index():
-        return jsonify(service="mini-sorting-hub-backend", status_url="/api/status",
-                       dashboard="Next.js frontend runs separately on port 3000")
+        return jsonify(
+            service="mini-sorting-hub-backend",
+            api_version=1,
+            status_url="/api/status",
+            dashboard="Next.js frontend runs separately on port 3000",
+        )
 
     @app.get("/api/status")
     def status():
@@ -96,14 +108,22 @@ def build_app():
 
     @app.post("/api/control")
     def control():
-        data = request.get_json(force=True)
+        data = _json_object()
+        if not isinstance(data.get("action"), str):
+            raise ValueError("action is required")
         with lock:
             controller.operator(data.get("action"), target_bin=data.get("target_bin"))
             return jsonify(controller.snapshot())
 
     @app.post("/api/settings")
     def settings():
-        data = request.get_json(force=True)
+        data = _json_object()
+        allowed = {"max_weight_g", "max_height_mm", "save_angle_for"}
+        unknown = sorted(set(data) - allowed)
+        if unknown:
+            raise ValueError("Unknown settings: " + ", ".join(unknown))
+        if not data:
+            raise ValueError("At least one setting is required")
         with lock:
             if not controller.paused or controller.job:
                 raise ValueError("Pause and finish/clear the active job before changing settings")
@@ -135,7 +155,10 @@ def build_app():
 
     @app.get("/api/jobs")
     def jobs():
-        return jsonify(store.jobs(request.args.get("q", "")))
+        query = request.args.get("q", "").strip()
+        if len(query) > 120:
+            raise ValueError("Search query is too long")
+        return jsonify(store.jobs(query))
 
     @app.get("/api/history")
     def history():
@@ -158,9 +181,17 @@ def build_app():
 
     @app.post("/api/ai/result")
     def ai_result():
+        data = _json_object()
         with lock:
-            controller.vision(request.get_json(force=True))
+            controller.vision(data)
             return jsonify(controller.snapshot())
+
+    @app.after_request
+    def api_headers(response):
+        if request.path == "/" or request.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
     @app.errorhandler(ValueError)
     def bad_request(error):

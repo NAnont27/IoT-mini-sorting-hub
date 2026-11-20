@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mini Sorting Hub · Bench",
-  description: "Dashboard สำหรับทดสอบระบบคัดแยกพัสดุบนโต๊ะ",
+  title: "Sorta · Mini Sorting Hub",
+  description: "ศูนย์ควบคุมและติดตามระบบคัดแยกพัสดุ Mini Sorting Hub",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
