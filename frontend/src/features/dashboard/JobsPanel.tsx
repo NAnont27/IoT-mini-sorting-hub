@@ -29,7 +29,7 @@ export function JobsPanel() {
   }, [search, revision]);
 
   return <section className="panel">
-    <h2>ประวัติการคัดแยก</h2>
+    <div className="section-heading"><div><p className="eyebrow">JOB LOG</p><h2>ประวัติการคัดแยก</h2></div><span className="summary-chip ready">{jobs.length} รายการ</span></div>
     <form className="actions" onSubmit={(e) => { e.preventDefault(); setSearch(query); setRevision((n) => n + 1); }}>
       <label className="grow">ค้นหางาน <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="job_id / ชื่อ / ห้อง / ข้อมูลในงาน" /></label>
       <button type="submit">ค้นหา</button>
@@ -40,7 +40,7 @@ export function JobsPanel() {
       <tbody>{jobs.map((job) => <tr key={job.job_id}>
         <td>{new Date(job.created).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</td>
         <td><code>{job.job_id}</code><br /><small>{job.mode.toUpperCase()}</small></td>
-        <td>{job.target_bin ?? "—"}</td><td>{job.result ?? job.state}</td><td>{job.reason ?? "—"}</td>
+        <td>{job.target_bin ?? "—"}</td><td><span className="status-pill">{job.result ?? job.state}</span></td><td>{job.reason ?? "—"}</td>
       </tr>)}</tbody>
     </table></div>
     {!jobs.length && !error && <p className="muted">ยังไม่มีรายการ</p>}

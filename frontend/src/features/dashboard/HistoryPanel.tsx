@@ -40,7 +40,7 @@ export function HistoryPanel() {
   const line = values.map((value, i) => `${30 + (i * 940) / Math.max(1, values.length - 1)},${180 - ((value - lo) / span) * 140}`).join(" ");
 
   return <section className="panel">
-    <h2>กราฟย้อนหลัง</h2>
+    <div className="section-heading"><div><p className="eyebrow">TELEMETRY HISTORY</p><h2>กราฟย้อนหลัง</h2></div>{history && <span className="summary-chip ready">{history.source}</span>}</div>
     <p className="muted">ดึงจากฐานข้อมูลเมื่อกดโหลด แสดงแหล่งข้อมูลตามจริง</p>
     <div className="actions">
       <label>ค่าที่ต้องการดู <select value={metric} onChange={(e) => setMetric(e.target.value as Metric)}>
@@ -51,12 +51,12 @@ export function HistoryPanel() {
     {error && <p role="alert" className="error">{error}</p>}
     {history && <p className={history.source === "InfluxDB" ? "muted" : "warning"}>{history.source} · {points.length} จุด · {loadedMetric}</p>}
     {history && !points.length && <p className="muted">ไม่มีข้อมูลในช่วงเวลานี้</p>}
-    {points.length > 0 && <figure>
+    {points.length > 0 && <figure className="chart-frame">
       <svg viewBox="0 0 1000 220" role="img" aria-label={`กราฟ ${loadedMetric} ต่ำสุด ${lo.toFixed(2)} สูงสุด ${hi.toFixed(2)}`}>
-        <line x1="30" y1="185" x2="970" y2="185" stroke="currentColor" opacity="0.2" />
+        {[45, 80, 115, 150, 185].map((y) => <line key={y} x1="30" y1={y} x2="970" y2={y} stroke="currentColor" opacity="0.08" />)}
         <text x="30" y="20" fontSize="14" fill="currentColor">min {lo.toFixed(2)} · max {hi.toFixed(2)}</text>
-        <polyline points={line} fill="none" stroke="var(--accent)" strokeWidth="3" />
-        {points.length === 1 && <circle cx="30" cy="180" r="4" fill="var(--accent)" />}
+        <polyline points={line} fill="none" stroke="var(--green)" strokeWidth="3" />
+        {points.length === 1 && <circle cx="30" cy="180" r="4" fill="var(--green)" />}
         <text x="30" y="212" fontSize="12" fill="currentColor">{points[0].time}</text>
         <text x="970" y="212" textAnchor="end" fontSize="12" fill="currentColor">{points[points.length - 1].time}</text>
       </svg>

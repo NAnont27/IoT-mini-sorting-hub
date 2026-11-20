@@ -16,6 +16,8 @@
 
 API อยู่พอร์ต 5000; `/` คืนข้อมูล service ส่วนหน้า dashboard อยู่ Next.js พอร์ต 3000 ไม่มี Flask template แล้ว
 
+POST endpoints รับเฉพาะ JSON object และคืน error JSON เมื่อ body/action/settings ผิดรูป การตั้งค่ารับเฉพาะ `max_weight_g`, `max_height_mm` และ `save_angle_for`; validation นี้เป็นขอบเขต HTTP เพิ่มเติมและไม่แทน interlock ใน controller
+
 `config.json` และ `data/hub.sqlite3` อิงโฟลเดอร์ backend เสมอ ไม่ขึ้นกับ directory ที่รัน ใช้คำสั่ง module ตามด้านบน ไม่รัน app/hub.py แบบไฟล์เดี่ยว เพราะใช้ package imports
 
 ต้องมี MQTT_USER/PASSWORD ที่ถูกต้องและ broker ที่เข้าถึงได้ ระบบยังพักและไม่ผ่าน readiness จนกว่าจะมีข้อมูลเซนเซอร์จริง ไม่เริ่มกลไกเองจากการเปิดหน้าเว็บ

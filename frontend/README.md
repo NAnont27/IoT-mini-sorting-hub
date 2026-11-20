@@ -49,7 +49,8 @@ npm run start -- --hostname 0.0.0.0
 
 ## ฟังก์ชันที่ย้ายมาจากหน้าเดิม
 
-- สถานะ/readiness/error และเซนเซอร์ล่าสุด (polling ประมาณ 1s หลัง request จบ)
+- Operator console แบบ responsive มี sidebar, สรุปสถานะ/readiness และการเชื่อมต่อ Backend
+- การ์ด telemetry สำหรับน้ำหนัก ความสูง มุมราง แสง และทางผ่าน IR (polling ประมาณ 1s หลัง request จบ)
 - พัก/เริ่มต่อ เลือก A/B/HOLD เมื่องานอยู่ WAIT_DECISION ลอง AI ใหม่ และ reset fault หลังผู้ใช้ยืนยันเคลียร์จริง
 - ตั้งขีดจำกัดและจำมุมจาก AS5600 ผ่าน backend
 - ค้นประวัติ jobs (polling ประมาณ 5s หลัง request จบ)
