@@ -153,6 +153,25 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.c.job["state"], "PAUSED_AI")
         self.assertNotIn("POSITION", [p.get("action") for _, p in self.sent])
 
+    def test_ai_result_leaves_controller_without_recipient_data(self):
+        self.c.config["mode"] = "ai"
+        self.c.operator("resume")
+        self.refresh(weight=100)
+        self.c.tick()
+        self.c.vision({"job_id": self.c.job["job_id"], "vision_attempt": 1,
+                       "outcome": "RESOLVED", "target_bin": "A", "reason_code": "RESOLVED_ROOM_AND_NAME",
+                       "tracking_id": None, "registry_version": "demo-v1", "a_max_floor": 3,
+                       "resolved_room": "202", "resolved_floor": 2,
+                       "extraction": {"recipient_name_raw": "คุณธนา ใจดี", "source_excerpt": "ผู้รับ: คุณธนา"},
+                       "evidence": ["recipient name matches R001"], "artifacts": {"image_path": "x.jpg"},
+                       "extraction_source": "gemini", "grounding_issues": []})
+        payload = next(p for t, p in self.sent if t == "sorter/vision")
+        self.assertEqual(payload["outcome"], "RESOLVED")
+        for key in ("extraction", "resolved_room", "evidence", "artifacts", "extraction_source"):
+            self.assertNotIn(key, payload)
+        self.assertNotIn("คุณธนา", json.dumps(payload, ensure_ascii=False))
+        self.assertNotIn("คุณธนา", json.dumps(self.c.job["vision_result"], ensure_ascii=False))
+
     def test_old_ai_result_rejected(self):
         with self.assertRaises(ValueError):
             self.c.vision({"job_id": "old", "outcome": "RESOLVED", "target_bin": "A"})
