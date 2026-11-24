@@ -90,7 +90,7 @@ class Controller:
         if weight.get("node_fault"):
             errors.append("Node fault; clear route then reset")
         if not height.get("valid"):
-            errors.append("ToF unavailable or empty distance not calibrated")
+            errors.append("Height sensor (SRF05) unavailable or empty distance not calibrated")
         if not gateway.get("angle_valid"):
             errors.append("AS5600 angle/magnet invalid")
         if not gateway.get("light_valid"):

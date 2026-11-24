@@ -1,5 +1,5 @@
 // ESP32-S3: VL53L0X distance test with the Pololu VL53L0X library
-// (Library Manager: "VL53L0X" by Pololu). SDA=GPIO8, SCL=GPIO9.
+// (Library Manager: "VL53L0X" by Pololu). SDA=GPIO12, SCL=GPIO13.
 // Purpose: check whether this module works when the Adafruit library fails.
 #include <Wire.h>
 #include <VL53L0X.h>
@@ -10,8 +10,8 @@ bool ready = false;
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Wire.begin(8, 9);
-  Wire.setClock(100000);
+  Wire.begin(12, 13);
+  Wire.setClock(50000);  // 50 kHz: more tolerant of Servo noise / breadboard wiring
   sensor.setBus(&Wire);
   sensor.setTimeout(500);
   ready = sensor.init();

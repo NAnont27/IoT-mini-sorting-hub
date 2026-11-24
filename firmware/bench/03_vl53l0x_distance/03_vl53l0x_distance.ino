@@ -1,4 +1,4 @@
-// ESP32-S3-N16R8: SDA -> GPIO8, SCL -> GPIO9.
+// ESP32-S3-N16R8: SDA -> GPIO12, SCL -> GPIO13.
 // Install Adafruit VL53L0X and its dependencies via Library Manager.
 #include <Wire.h>
 #include <Adafruit_VL53L0X.h>
@@ -8,7 +8,7 @@ Adafruit_VL53L0X sensor;
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Wire.begin(8, 9);
+  Wire.begin(12, 13);
   Wire.setClock(100000);
 
   if (!sensor.begin(0x29, false, &Wire)) {

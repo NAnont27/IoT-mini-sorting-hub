@@ -4,15 +4,15 @@ import { useState } from "react";
 
 type Servo = "gate" | "chute";
 
-// Firmware defaults (hub_node.ino): gate closed 90 / open 60; chute A60 / B90 / HOLD120.
-const PRESETS: Record<Servo, { label: string; angle: number }[]> = {
-  gate: [{ label: "ปิด 90°", angle: 90 }, { label: "เปิด 60°", angle: 60 }],
-  chute: [{ label: "A 60°", angle: 60 }, { label: "B 90°", angle: 90 }, { label: "HOLD 120°", angle: 120 }],
-};
+// User request 24 Nov: only the two command ends. Firmware maps 0/180 to its attach range
+// (hub_node: 1000/2000 us), so these are command limits, NOT calibrated physical angles.
+const ENDS = [
+  { label: "ซ้ายสุด (0°)", angle: 0 },
+  { label: "ขวาสุด (180°)", angle: 180 },
+];
 
 export function ServoTestPanel({ enabled, onSend }: { enabled: boolean; onSend: (servo: Servo, angle: number) => void }) {
   const [servo, setServo] = useState<Servo>("chute");
-  const [angle, setAngle] = useState(90);
 
   return (
     <div className="servo-test">
@@ -22,13 +22,9 @@ export function ServoTestPanel({ enabled, onSend }: { enabled: boolean; onSend: 
           <option value="chute">MG996R ราง (GPIO7)</option>
           <option value="gate">MG90S ประตู (GPIO6)</option>
         </select>
-        {PRESETS[servo].map((p) => (
+        {ENDS.map((p) => (
           <button key={p.label} className="button secondary" disabled={!enabled} onClick={() => onSend(servo, p.angle)}>{p.label}</button>
         ))}
-      </div>
-      <div className="control-buttons">
-        <input type="range" min={0} max={180} value={angle} disabled={!enabled} onChange={(e) => setAngle(Number(e.target.value))} aria-label="มุม" />
-        <button className="button secondary" disabled={!enabled} onClick={() => onSend(servo, angle)}>ส่ง {angle}°</button>
       </div>
     </div>
   );

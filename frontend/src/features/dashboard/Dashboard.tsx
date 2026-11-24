@@ -134,7 +134,7 @@ export function Dashboard() {
 
       <section id="sensors" className="content-section" aria-labelledby="sensor-title"><div className="section-heading"><div><p className="eyebrow">LIVE TELEMETRY</p><h2 id="sensor-title">เซนเซอร์ล่าสุด</h2></div><span className="refresh-note">รีเฟรชประมาณทุก 1 วินาที</span></div><div className="sensor-grid">
         <SensorCard label="น้ำหนักบนถาด" value={numberValue(weight, "weight_g")} unit="g" valid={weightReady} detail={weight?.stable ? "ค่านิ่งแล้ว" : "กำลังรอค่านิ่ง"}><span className="scale-symbol">kg</span></SensorCard>
-        <SensorCard label="ความสูงพัสดุ" value={numberValue(height, "height_mm", 0)} unit="mm" valid={heightReady} detail="VL53L0X · ESP32"><span className="ruler-symbol" /></SensorCard>
+        <SensorCard label="ความสูงพัสดุ" value={numberValue(height, "height_mm", 0)} unit="mm" valid={heightReady} detail="HY-SRF05 · ESP32"><span className="ruler-symbol" /></SensorCard>
         <SensorCard label="มุมราง" value={numberValue(gateway, "angle_deg")} unit="°" valid={angleReady} detail="AS5600 · Raspberry Pi"><span className="angle-symbol" /></SensorCard>
         <SensorCard label="ความสว่าง" value={numberValue(gateway, "light_lux", 0)} unit="lux" valid={lightReady} detail="BH1750 · Raspberry Pi"><span className="sun-symbol">✦</span></SensorCard>
         <SensorCard label="IR ถาด" value={trayIr === true ? "มีกล่อง" : routeClear ? "ว่าง" : "ตรวจ"} unit="" valid={passageReady} detail="E18 จุดวางกล่อง (GPIO11)"><span className="beam-symbol" /></SensorCard>

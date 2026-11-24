@@ -2,16 +2,20 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include <Wire.h>
 #include <Preferences.h>
 #include <HX711.h>
-#include <Adafruit_VL53L0X.h>
 #include <ESP32Servo.h>
 #include "secrets.h"
 
-constexpr int HX_DT = 4, HX_SCK = 5, GATE_PIN = 6, CHUTE_PIN = 7, SDA_PIN = 8, SCL_PIN = 9;
+constexpr int HX_DT = 4, HX_SCK = 5, GATE_PIN = 6, CHUTE_PIN = 7;
+// D024: height sensor is HY-SRF05 ultrasonic (replaces VL53L0X). VCC = Adapter +5V.
+// TRIG = GPIO12 (3.3 V output is enough). ECHO is 5 V: ECHO--10k--GPIO13--15k--GND.
+// Never connect ECHO directly to GPIO13. SRF05 OUT pin is not used.
+constexpr int US_TRIG = 12, US_ECHO = 13;
+constexpr uint32_t US_TIMEOUT_US = 30000;          // ~5 m round trip; no echo -> invalid
+constexpr float US_MIN_MM = 20, US_MAX_MM = 4000;  // SRF05 usable range
 constexpr int BUTTON_PIN = 10;
-// D011: one E18 at the tray (GPIO11, R v2 divider). GPIO12-14 are no longer used.
+// D011: one E18 at the tray (GPIO11, R v2 divider). GPIO14 unused.
 constexpr int IR_COUNT = 1;
 constexpr int IR_PINS[IR_COUNT] = { 11 };
 const char *IR_NAMES[IR_COUNT] = { "tray" };
@@ -28,8 +32,9 @@ WiFiClient network;
 PubSubClient mqtt(network);
 Preferences prefs;
 HX711 scale;
-Adafruit_VL53L0X tof;
 Servo gateServo, chuteServo;
+// "tof*" names kept for the existing MQTT/Serial contract; they now describe the SRF05.
+// tofFound = an echo was received recently (sensor answering).
 String sessionId, activeJob, targetBin, displayState = "PAUSED_OPERATOR";
 bool released = false, nodeFault = false, tofFound = false, distanceValid = false, hxSeen = false;
 long zeroRaw = 0;
@@ -37,6 +42,7 @@ float scaleFactor = 0, emptyDistance = 0, distanceMm = 0;
 bool hasTare = false;
 long samples[WINDOW];
 int sampleCount = 0, sampleIndex = 0;
+uint32_t lastUsPing = 0, lastEcho = 0;
 uint32_t lastHx = 0, lastTof = 0, lastPublish = 0, lastConnect = 0, lastLease = 0, sequence = 0;
 uint32_t gateDoneAt = 0;
 String releaseCommand;
@@ -264,12 +270,27 @@ void sampleSensors() {
     lastHx = millis();
     hxSeen = true;
   }
-  if (tofFound && elapsed(now, lastTof, 300)) {
-    lastTof = now;
-    VL53L0X_RangingMeasurementData_t measurement = {};
-    auto result = tof.rangingTest(&measurement, false);
-    distanceValid = result == VL53L0X_ERROR_NONE && measurement.RangeStatus == 0;
-    if (distanceValid) distanceMm = measurement.RangeMilliMeter;
+  if (elapsed(now, lastUsPing, 300)) {
+    lastUsPing = now;
+    digitalWrite(US_TRIG, LOW);
+    delayMicroseconds(2);
+    digitalWrite(US_TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(US_TRIG, LOW);
+    // Blocks at most US_TIMEOUT_US (30 ms) every 300 ms.
+    const unsigned long echoUs = pulseIn(US_ECHO, HIGH, US_TIMEOUT_US);
+    const float mm = echoUs * 0.343f / 2.0f;  // speed of sound ~343 m/s at ~20 C
+    distanceValid = echoUs > 0 && mm >= US_MIN_MM && mm <= US_MAX_MM;
+    if (echoUs > 0) {
+      tofFound = true;
+      lastEcho = millis();
+    } else if (elapsed(millis(), lastEcho, 3000)) {
+      tofFound = false;
+    }
+    if (distanceValid) {
+      distanceMm = mm;
+      lastTof = millis();
+    }
   }
   now = millis();
   for (int i = 0; i < IR_COUNT; i++) {
@@ -357,6 +378,42 @@ void telemetry() {
   publishJson("sorter/actuator", doc);
 }
 
+void printHelp() {
+  Serial.println("HUB NODE BENCH READY | Serial 115200, line ending = Newline");
+  Serial.println("  S          = show all Node sensor values (read-only, works during a job)");
+  Serial.println("  T          = HX711 tare: tray EMPTY, then send T");
+  Serial.println("  C <grams>  = HX711 calibrate with a WEIGHED reference, e.g. C 100");
+  Serial.println("  H          = SRF05 save empty-tray distance: tray EMPTY, then send H");
+  Serial.println("  R          = reset SRF05 reading (clears valid flag)");
+  Serial.println("  T/C/H/R are blocked while a job is active. Other text shows this help.");
+}
+
+// Read-only snapshot of Node sensors for bench diagnosis (Serial command S).
+// Gateway sensors (AS5600/BH1750) live on the Pi and are not visible here.
+void printStatus() {
+  const uint32_t now = millis();
+  Serial.println("---- STATUS ----");
+  Serial.printf("NET   wifi=%s ip=%s mqtt=%s\n",
+                WiFi.status() == WL_CONNECTED ? "OK" : "DOWN",
+                WiFi.localIP().toString().c_str(), mqtt.connected() ? "OK" : "DOWN");
+  Serial.printf("HX711 seen=%d fresh=%d samples=%d/%d raw=%.0f tared=%d factor=%.6f",
+                hxSeen, hxSeen && !elapsed(now, lastHx, 2000), sampleCount, WINDOW,
+                meanRaw(), hasTare, scaleFactor);
+  if (weightValid()) Serial.printf(" weight_g=%.1f stable=%d\n",
+                                   (meanRaw() - zeroRaw) / scaleFactor, weightStable());
+  else Serial.println(" weight_g=NOT_CALIBRATED");
+  Serial.printf("SRF05 echo=%d valid=%d fresh=%d distance_mm=%.0f empty_mm=%.0f",
+                tofFound, distanceValid, !elapsed(now, lastTof, 2000), distanceMm, emptyDistance);
+  if (distanceValid && emptyDistance > 0) Serial.printf(" height_mm=%.0f\n", emptyDistance - distanceMm);
+  else Serial.println(" height_mm=N/A");
+  for (int i = 0; i < IR_COUNT; i++)
+    Serial.printf("IR    %s gpio%d=%s\n", IR_NAMES[i], IR_PINS[i], irStable[i] ? "DETECTED" : "CLEAR");
+  Serial.printf("BTN   gpio%d=%s\n", BUTTON_PIN, buttonStable ? "PRESSED" : "RELEASED");
+  Serial.printf("NODE  state=%s job=%s fault=%d released=%d\n", displayState.c_str(),
+                activeJob.length() ? activeJob.c_str() : "-", nodeFault, released);
+  Serial.println("----------------");
+}
+
 void serialCommands() {
   while (Serial.available()) {
     char c = Serial.read();
@@ -366,7 +423,7 @@ void serialCommands() {
       continue;
     }
     serialLine.trim();
-    if (activeJob.length()) {
+    if (activeJob.length() && serialLine != "S") {
       Serial.println("Calibration blocked: active job");
       serialLine = "";
       continue;
@@ -390,18 +447,20 @@ void serialCommands() {
       emptyDistance = distanceMm;
       prefs.putFloat("empty", emptyDistance);
       Serial.printf("EMPTY_DISTANCE_SAVED mm=%.1f\n", emptyDistance);
+    } else if (serialLine == "S") {
+      printStatus();
     } else if (serialLine == "R") {
-      tofFound = tof.begin(0x29, false, &Wire);
       distanceValid = false;
-      Serial.println(tofFound ? "ToF initialized" : "ToF not found");
+      lastUsPing = millis() - 300;  // ping again on the next loop
+      Serial.println("SRF05 reading reset");
     } else if (serialLine == "T" || serialLine.startsWith("C ")) {
       Serial.printf("HX711 not ready: seen=%d samples=%d/%d fresh=%d tared=%d\n",
                     hxSeen, sampleCount, WINDOW, hxSeen && !elapsed(millis(), lastHx, 2000), hasTare);
     } else if (serialLine == "H") {
-      Serial.printf("ToF not ready: found=%d valid=%d fresh=%d\n",
+      Serial.printf("SRF05 not ready: echo=%d valid=%d fresh=%d\n",
                     tofFound, distanceValid, !elapsed(millis(), lastTof, 2000));
     } else {
-      Serial.println("Commands: T (empty tare), C <known grams>, H (empty ToF), R (retry ToF)");
+      printHelp();
     }
     serialLine = "";
   }
@@ -441,9 +500,9 @@ void setup() {
   hasTare = prefs.getBool("tared", false);
   emptyDistance = prefs.getFloat("empty", 0);
   scale.begin(HX_DT, HX_SCK);
-  Wire.begin(SDA_PIN, SCL_PIN);
-  Wire.setClock(100000);
-  tofFound = tof.begin(0x29, false, &Wire);
+  pinMode(US_TRIG, OUTPUT);
+  digitalWrite(US_TRIG, LOW);
+  pinMode(US_ECHO, INPUT);  // external 10k/15k divider sets the level; no internal pull
   for (int i = 0; i < IR_COUNT; i++) {
     pinMode(IR_PINS[i], INPUT);
     irReading[i] = irStable[i] = (digitalRead(IR_PINS[i]) == LOW);
@@ -455,7 +514,9 @@ void setup() {
   gateServo.setPeriodHertz(50);
   chuteServo.setPeriodHertz(50);
   gateServo.attach(GATE_PIN, 1000, 2000);
-  chuteServo.attach(CHUTE_PIN, 1000, 2000);
+  // MG996R: 1000-2000 us gave only ~90 deg (05c test). 600-2400 us ~ 180 deg.
+  // write(0..180) now maps to this wider range; CHUTE_ANGLES are command values, not calibrated.
+  chuteServo.attach(CHUTE_PIN, 600, 2400);
   gateServo.write(GATE_CLOSED);
   chuteServo.write(90);
   if (!gateServo.attached() || !chuteServo.attached()) nodeFault = true;
@@ -467,7 +528,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.println("HUB NODE BENCH READY | T / C <grams> / H / R (newline required)");
+  printHelp();
 }
 
 void loop() {
