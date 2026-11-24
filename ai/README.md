@@ -50,7 +50,7 @@
 python -m unittest discover -s ai/tests -v
 ```
 
-ผลที่ถูกต้อง: `Ran 77 tests ... OK`
+ผลที่ถูกต้อง: `Ran 78 tests ... OK`
 
 **ข. รันกับ Gemini จริง**
 
