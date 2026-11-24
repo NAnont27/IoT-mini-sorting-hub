@@ -46,6 +46,7 @@
 | HX711 | ⏳ ยังไม่ T/C เพราะไม่มีน้ำหนักอ้างอิงที่ชั่งจริง |
 | AS5600 | ⏳ ยังไม่ `angle_valid` / ยังไม่จำมุม A/B/HOLD |
 | ปุ่ม / LED | ⏳ ยังไม่ยืนยัน |
+| กล้อง → เว็บ | 🔁 24 พ.ย. เพิ่ม `backend/app/camera.py` (Picamera2) + `GET /api/camera/snapshot.jpg` / `/api/camera/status` และแผง CameraPanel รีเฟรช ~1s; แสดงภาพอย่างเดียว ยังไม่ส่ง OCR/AI; ยังไม่ทดสอบบน Pi |
 | กล้อง / AI | ⏳ โมดูล `ai/` (resolver, extraction, prompt, Gemini client, pipeline, CLI) อยู่บน dev: unittest 77 ผ่าน, เรียก Gemini จริง 1 รอบได้ `RESOLVED`/A (ทีม AI รายงาน) — ยังไม่มี OCR/กล้อง, ยังไม่วัดเวลา, ยังไม่เชื่อม `/api/ai/*` |
 | Flag ทดสอบ | ⚠️ `BENCH_SKIP_SENSOR_CHECKS=1` **ยังเปิดใน `backend/.env` บน Pi** ห้ามใช้ผลระหว่างเปิดเป็นหลักฐาน |
 
@@ -346,6 +347,7 @@ BH1750 + AS5600 ขนานบนบัสเดียว: **pin1 = 3.3V, pin6 
 ### API and AI
 
 - ชื่อฟิลด์: `target_bin`, `resolved_room`, `resolved_floor`, `reason_code`; job มี `destination_sensed`
+- Camera: `GET /api/camera/snapshot.jpg` (JPEG, 503+เหตุผลเมื่อไม่มีกล้อง), `GET /api/camera/status`; `CAMERA_ENABLED` ใน `backend/.env`; Pi ต้องมี `python3-picamera2` และ `.venv` เห็น system site-packages; ห้ามรันโปรแกรมอื่นจับกล้องพร้อม backend
 - Routes: `/api/status`, `/api/control`, `/api/settings`, `/api/jobs`, `/api/history`, `GET /api/ai/pending`, `POST /api/ai/result` (RESOLVED/HOLD/RETRY_CAPTURE/SERVICE_ERROR/PIPELINE_ERROR ตาม `docs/ai/AI_INTERFACE_TH.md`)
 - โมดูล `ai/` ของทีม AI ใช้ต่อ ไม่สร้าง pipeline ซ้ำ; AI ไม่สั่ง GPIO/MQTT มอเตอร์ตรง
 

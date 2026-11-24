@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "@/lib/api/client";
 import type { HubSnapshot, TargetBin } from "@/types/hub";
+import { CameraPanel } from "./CameraPanel";
 import { HistoryPanel } from "./HistoryPanel";
 import { JobsPanel } from "./JobsPanel";
 import { ServoTestPanel } from "./ServoTestPanel";
@@ -139,6 +140,8 @@ export function Dashboard() {
         <SensorCard label="ความสว่าง" value={numberValue(gateway, "light_lux", 0)} unit="lux" valid={lightReady} detail="BH1750 · Raspberry Pi"><span className="sun-symbol">✦</span></SensorCard>
         <SensorCard label="IR ถาด" value={trayIr === true ? "มีกล่อง" : routeClear ? "ว่าง" : "ตรวจ"} unit="" valid={passageReady} detail="E18 จุดวางกล่อง (GPIO11)"><span className="beam-symbol" /></SensorCard>
       </div></section>
+
+      <CameraPanel />
 
       <section id="current-job" className="content-section" aria-labelledby="job-title"><div className="section-heading"><div><p className="eyebrow">ACTIVE PARCEL</p><h2 id="job-title">งานปัจจุบัน</h2></div>{job && <code className="job-id">{job.job_id}</code>}</div><div className="job-layout">
         <div className="job-summary">{job ? <><div className="job-state-line"><span className="parcel-glyph"><Icon name="parcel" /></span><div><span>ขั้นตอนปัจจุบัน</span><strong>{stateLabels[job.state] ?? job.state}</strong></div></div><dl className="job-facts"><div><dt>น้ำหนัก</dt><dd>{typeof job.weight_g === "number" ? `${job.weight_g.toFixed(1)} g` : "—"}</dd></div><div><dt>ความสูง</dt><dd>{typeof job.height_mm === "number" ? `${job.height_mm.toFixed(0)} mm` : "—"}</dd></div><div><dt>โหมด</dt><dd>{job.mode.toUpperCase()}</dd></div></dl></> : <div className="no-job"><span className="parcel-glyph"><Icon name="parcel" /></span><div><strong>ยังไม่มีพัสดุบนถาด</strong><p>เมื่อ resume และกล่องนิ่ง ระบบจะสร้าง job_id อัตโนมัติ</p></div></div>}</div>

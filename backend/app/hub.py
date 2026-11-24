@@ -11,8 +11,9 @@ from pathlib import Path
 
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 
+from .camera import Camera, CameraUnavailable
 from .controller import BINS, Controller
 from .store import Store
 
@@ -91,6 +92,7 @@ def build_app():
 
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
+    camera = Camera()
 
     @app.get("/")
     def index():
@@ -186,6 +188,18 @@ def build_app():
         with lock:
             controller.vision(data)
             return jsonify(controller.snapshot())
+
+    @app.get("/api/camera/snapshot.jpg")
+    def camera_snapshot():
+        try:
+            jpeg = camera.snapshot_jpeg()
+        except CameraUnavailable as exc:
+            return jsonify(error="Camera unavailable: " + str(exc)), 503
+        return Response(jpeg, mimetype="image/jpeg")
+
+    @app.get("/api/camera/status")
+    def camera_status():
+        return jsonify(camera.status())
 
     @app.after_request
     def api_headers(response):
