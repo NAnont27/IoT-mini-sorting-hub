@@ -35,6 +35,16 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual((e["outcome"], e["target_bin"], e["resolved_floor"]), ("RESOLVED", "A", 2))
         self.assertEqual(e["extraction_source"], "mock")
 
+    def test_timings_have_all_four_keys_and_unmeasured_steps_are_null(self):
+        e = self.run_pipeline(OCR, MockClient(response_text=reply()))
+        t = e["timings_ms"]
+        self.assertEqual(set(t), {"preprocess", "ocr", "ai", "resolve"})
+        self.assertIsNone(t["preprocess"])
+        self.assertIsNone(t["ocr"])
+        self.assertIsInstance(t["ai"], float)
+        self.assertGreaterEqual(t["ai"], 0)
+        self.assertIsInstance(t["resolve"], float)
+
     def test_empty_ocr_requests_retry_capture(self):
         e = self.run_pipeline("  ", MockClient(response_text=reply()))
         self.assertEqual((e["outcome"], e["target_bin"]), ("RETRY_CAPTURE", None))

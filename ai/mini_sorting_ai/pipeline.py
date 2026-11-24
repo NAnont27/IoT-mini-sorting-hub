@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+import time
+
 from .extraction import STATUS_NO_TEXT, STATUS_OK, extract_recipient
 from .registry import Snapshot
 from .resolver import resolve_recipient, service_error
@@ -14,19 +16,25 @@ from .resolver import resolve_recipient, service_error
 
 def process_ocr_text(job_id: str, ocr_text, snapshot: Snapshot, client, *,
                      vision_attempt: int = 1, artifacts: dict | None = None) -> dict:
+    # วัดเวลาเฉพาะขั้นที่โมดูลนี้ทำจริง: ai = เรียก AI รวม parse/ตรวจ, resolve = กฎทะเบียน
+    # preprocess/ocr ไม่ได้รันในโมดูลนี้ (รับข้อความ OCR มาแล้ว) จึงเป็น null ไม่ใช่ 0
+    started = time.perf_counter()
     result = extract_recipient(ocr_text, client)
+    ai_ms = round((time.perf_counter() - started) * 1000, 3)
 
     if result.status == STATUS_NO_TEXT:
-        return _retry_envelope(job_id, snapshot, vision_attempt, artifacts, result.reason)
+        envelope = _retry_envelope(job_id, snapshot, vision_attempt, artifacts, result.reason)
+    elif result.status != STATUS_OK:
+        envelope = service_error(job_id, snapshot, result.reason,
+                                 vision_attempt=vision_attempt)
+    else:
+        envelope = resolve_recipient(job_id, result.extraction, snapshot,
+                                     vision_attempt=vision_attempt, artifacts=artifacts)
+        envelope["extraction_source"] = result.source
+        envelope["grounding_issues"] = list(result.grounding_issues)
 
-    if result.status != STATUS_OK:
-        return service_error(job_id, snapshot, result.reason,
-                             vision_attempt=vision_attempt)
-
-    envelope = resolve_recipient(job_id, result.extraction, snapshot,
-                                 vision_attempt=vision_attempt, artifacts=artifacts)
-    envelope["extraction_source"] = result.source
-    envelope["grounding_issues"] = list(result.grounding_issues)
+    envelope["timings_ms"] = {"preprocess": None, "ocr": None, "ai": ai_ms,
+                              "resolve": envelope.get("timings_ms", {}).get("resolve")}
     return envelope
 
 
