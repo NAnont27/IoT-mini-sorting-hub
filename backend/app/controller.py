@@ -15,6 +15,16 @@ def circular_error(a, b):
     return abs((a - b + 180) % 360 - 180)
 
 
+# Fields of an AI result that may leave the controller (MQTT sorter/vision and jobs table).
+# Recipient name, room, extraction excerpts and artifact paths are personal or raw and are dropped.
+VISION_PUBLIC_FIELDS = ("job_id", "vision_attempt", "outcome", "target_bin", "reason_code",
+                        "tracking_id", "registry_version", "a_max_floor", "resolved_floor")
+
+
+def public_vision_result(result):
+    return {key: result[key] for key in VISION_PUBLIC_FIELDS if key in result}
+
+
 class Controller:
     def __init__(self, config, store, publish, clock=time.monotonic):
         self.config, self.store, self.publish, self.clock = config, store, publish, clock
@@ -302,8 +312,9 @@ class Controller:
             raise ValueError("reason_code required")
         if self.paused and outcome not in {"SERVICE_ERROR", "PIPELINE_ERROR"}:
             raise ValueError("Resume before submitting the result")
-        self.job["vision_result"] = result
-        self.publish("sorter/vision", {"schema_version": 1, **result})
+        public = public_vision_result(result)
+        self.job["vision_result"] = public
+        self.publish("sorter/vision", {"schema_version": 1, **public})
         if outcome in {"SERVICE_ERROR", "PIPELINE_ERROR"}:
             self.job["reason"] = result["reason_code"]
             self.paused = True
