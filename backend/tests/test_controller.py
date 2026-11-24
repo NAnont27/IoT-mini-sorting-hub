@@ -37,10 +37,12 @@ class ControllerTests(unittest.TestCase):
         self.c.ingest(topic, {"schema_version": 1, "session_id": "boot1", "device_id": "node-01",
                              "seq": self.seq, "uptime_ms": 100000, **fields})
 
-    def refresh(self, weight=0):
+    def refresh(self, weight=0, tray=None):
+        # D011: one tray IR; by default it sees a parcel whenever weight is on the tray.
+        tray = weight > 0 if tray is None else tray
         self.feed("sorter/weight", valid=True, weight_g=weight, stable=True, node_fault=False)
         self.feed("sorter/height", valid=True, height_mm=50)
-        self.feed("sorter/passage", active={k: False for k in ("tray_exit", "A", "B", "HOLD")}, events=[])
+        self.feed("sorter/passage", active={"tray": tray}, events=[])
         self.feed("sorter/gateway", angle_valid=True, angle_deg=30, light_valid=True, light_lux=300)
 
     def start(self):
@@ -65,11 +67,11 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.c.job["state"], "RELEASE")
         self.done()
 
-    def passage(self, *names):
+    def passage(self, *names, tray=False):
         job_id = self.c.job["job_id"]
         events = [{"id": i+1, "sensor": name, "job_id": job_id, "after_release": True}
                   for i, name in enumerate(names)]
-        self.feed("sorter/passage", active={k: False for k in ("tray_exit", "A", "B", "HOLD")}, events=events)
+        self.feed("sorter/passage", active={"tray": tray}, events=events)
 
     def test_no_auto_start_before_operator_resume(self):
         self.refresh(weight=100)
@@ -93,29 +95,28 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.c.job["state"], "VERIFY_EXIT")
         self.assertIsNone(self.c.job["result"])
 
-    def test_wrong_bin_faults(self):
-        self.release()
-        self.passage("tray_exit", "B")
-        self.assertEqual(self.c.job["result"], "MISROUTE")
-
-    def test_target_without_tray_event_faults(self):
-        self.release()
-        self.passage("A")
-        self.assertEqual(self.c.job["reason"], "BIN_BEFORE_TRAY_EXIT")
-
-    def test_correct_events_still_require_empty_tray(self):
-        self.release()
-        self.passage("tray_exit", "A")
+    def test_no_job_without_tray_ir(self):
+        self.c.operator("resume")
+        self.refresh(weight=100, tray=False)
         self.c.tick()
-        self.assertEqual(self.c.job["state"], "WAIT_CLEAR")
+        self.assertIsNone(self.c.job)
+
+    def test_tray_ir_clear_but_weight_still_on_tray_does_not_complete(self):
+        self.release()
+        self.refresh(weight=100, tray=False)
+        self.c.tick()
+        self.assertEqual(self.c.job["state"], "VERIFY_EXIT")
         self.assertIsNone(self.c.job["result"])
+
+    def test_parcel_left_tray_completes(self):
+        self.release()
         self.refresh(weight=0)
         self.c.tick()
         self.assertEqual(self.c.pending["message"]["action"], "COMPLETE")
         self.done()
         self.assertIsNone(self.c.job)
         self.assertEqual(self.store.saved[-1]["result"], "SORTED_A")
-        self.assertTrue(self.store.saved[-1]["passage_simulated"])
+        self.assertFalse(self.store.saved[-1]["destination_sensed"])
 
     def test_pending_command_timeout_faults_without_retry(self):
         self.start()
@@ -128,7 +129,7 @@ class ControllerTests(unittest.TestCase):
     def test_pause_after_release_does_not_switch_route(self):
         self.release()
         self.c.operator("pause")
-        self.passage("tray_exit", "A")
+        self.passage("tray")
         self.refresh(weight=0)
         self.c.tick()
         self.assertEqual(self.c.pending["message"]["action"], "COMPLETE")
@@ -179,8 +180,8 @@ class ControllerTests(unittest.TestCase):
 
     def test_repeated_passage_cannot_double_count(self):
         self.release()
-        self.passage("tray_exit", "A")
-        self.passage("tray_exit", "A")
+        self.passage("tray")
+        self.passage("tray")
         self.refresh(weight=0)
         self.c.tick()
         self.done()
@@ -207,6 +208,20 @@ class ControllerTests(unittest.TestCase):
         self.c.operator("target", target_bin="HOLD")
         self.assertIsNone(self.c.job["result"])
         self.assertEqual(self.c.job["state"], "POSITION")
+
+
+    def test_servo_test_sends_when_paused_without_job(self):
+        self.c.operator("servo_test", servo="chute", angle=120)
+        self.assertEqual(self.sent[-1][1]["action"], "SERVO_TEST")
+        self.assertEqual(self.sent[-1][1]["angle"], 120)
+        self.assertIsNone(self.c.pending)
+
+    def test_servo_test_rejected_during_job_or_bad_input(self):
+        with self.assertRaises(ValueError): self.c.operator("servo_test", servo="chute", angle=200)
+        with self.assertRaises(ValueError): self.c.operator("servo_test", servo="arm", angle=90)
+        self.start()
+        self.c.operator("pause")
+        with self.assertRaises(ValueError): self.c.operator("servo_test", servo="gate", angle=60)
 
 
 if __name__ == "__main__":

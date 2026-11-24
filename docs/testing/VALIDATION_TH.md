@@ -29,7 +29,7 @@ Tests state machine ตรวจ ACK ไม่เท่ากับถึงช�
 
 - compile/upload firmware ด้วย Arduino toolchain และ libraries จริง
 - Pi–Mosquitto–InfluxDB–ESP32 ผ่าน Wi-Fi/MQTT ทั้งระบบ; HTTP smoke ด้านบนไม่ใช่ผล integration นี้
-- การวัดแรงดัน IR, calibration, ToF, การรับโหลด Servo และ IR สี่ตัวพร้อมกัน
+- การวัดแรงดัน IR, calibration, ToF, การรับโหลด Servo และ IR ถาดตัวเดียว (D011) ขณะวาง/ยกกล่องจริง
 - การย้าย config/data จริงจาก Pi เดิม และการเชื่อม Next.js บนคอมไป Flask บน Pi ผ่าน LAN จริง
 - กล้อง/OCR/Gemini/resolver/CSV และการคัดกล่องด้วยโครงจริง
 - ความแม่นยำ เวลา throughput และผลเทียบการคัดโดยเจ้าหน้าที่

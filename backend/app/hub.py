@@ -112,7 +112,8 @@ def build_app():
         if not isinstance(data.get("action"), str):
             raise ValueError("action is required")
         with lock:
-            controller.operator(data.get("action"), target_bin=data.get("target_bin"))
+            controller.operator(data.get("action"), target_bin=data.get("target_bin"),
+                                servo=data.get("servo"), angle=data.get("angle"))
             return jsonify(controller.snapshot())
 
     @app.post("/api/settings")
