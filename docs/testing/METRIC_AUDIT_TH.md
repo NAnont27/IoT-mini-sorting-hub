@@ -21,9 +21,9 @@
 
 | ข้อ | คะแนน | เกณฑ์ | สิ่งที่พบ / สถานะ | หลักฐานที่ยังต้องมี |
 |---|---:|---|---|---|
-| 1 | 1 | เซนเซอร์ต่างชนิดอย่างน้อย 5 | มีแบบ/โค้ด: Load cell, E18, VL53L0X, AS5600, BH1750; E18 ตัวเดียวที่ถาดตาม D011 ไม่ใช้กล้อง/Servo/ปุ่มเพิ่มจำนวน | อ่านค่าจริงทั้งห้าชนิดในระบบเดียว |
-| 2 | 1 | I2C อย่างน้อย 1 | มีโค้ด: ToF บน ESP32, AS5600/BH1750 บน Pi | แสดงวงจรและอ่านข้อมูลจริง ไม่ใช้ scan address อย่างเดียว |
-| 3 | 1 | Sensor Node อย่างน้อย 2 sensors | ESP32 มี Load cell+HX711, ToF และ E18; มีเกินขั้นต่ำ | Node ส่งข้อมูลเซนเซอร์จริงเข้า backend |
+| 1 | 1 | เซนเซอร์ต่างชนิดอย่างน้อย 5 | มีแบบ/โค้ด: Load cell, E18, HY-SRF05 (D024 แทน VL53L0X), AS5600, BH1750; E18 ตัวเดียวที่ถาดตาม D011 ไม่ใช้กล้อง/Servo/ปุ่มเพิ่มจำนวน | อ่านค่าจริงทั้งห้าชนิดในระบบเดียว |
+| 2 | 1 | I2C อย่างน้อย 1 | มีโค้ด: AS5600/BH1750 บน Pi (SRF05 ไม่ใช่ I2C หลัง D024; ข้อนี้ยังผ่านด้วยฝั่ง Pi) | แสดงวงจรและอ่านข้อมูลจริง ไม่ใช้ scan address อย่างเดียว |
+| 3 | 1 | Sensor Node อย่างน้อย 2 sensors | ESP32 มี Load cell+HX711, SRF05 และ E18; มีเกินขั้นต่ำ | Node ส่งข้อมูลเซนเซอร์จริงเข้า backend |
 | 4 | 1 | Gateway อย่างน้อย 2 sensors | Pi อ่าน AS5600 และ BH1750 โดยตรงใน gateway_sensors.py | แสดงค่าจริงของสองตัวผ่าน Gateway พร้อมกัน |
 | 5 | 1 | Actuator อย่างน้อย 1 | มี Servo ประตู/ราง; ผู้ใช้ยืนยันขยับแยกตัวแล้ว | คำสั่งระบบทำให้ actuator ทำงานจริงตาม flow |
 | 6 | 1 | ใช้ camera/video capture | มีกล้องในรายการ แต่ไม่พบ capture pipeline ที่รวมใน source นี้ | ภาพจากกล้องของเครื่องพร้อม job_id/เวลา ไม่ใช่ภาพสำเร็จรูปอย่างเดียว |
@@ -63,7 +63,7 @@ PDF ระบุส่ง slides และ video ใน myCourseVille **9 ธั
 | Topic | ต้นทางข้อมูล | Publisher → Subscriber | หน้าที่/สิ่งที่แสดงในการเดโม |
 |---|---|---|---|
 | sorter/weight | Load cell ผ่าน HX711 | ESP32 → Pi backend | น้ำหนัก g, valid, stable; วาง/ยกน้ำหนักให้ค่าจริงเปลี่ยน ใช้สร้าง job เมื่อนิ่ง |
-| sorter/height | VL53L0X | ESP32 → Pi backend | distance_mm/height_mm/valid; เปลี่ยนระยะหรือกล่องเพื่อให้เห็นต้นทางอิสระจากน้ำหนัก |
+| sorter/height | HY-SRF05 | ESP32 → Pi backend | distance_mm/height_mm/valid; เปลี่ยนระยะหรือกล่องเพื่อให้เห็นต้นทางอิสระจากน้ำหนัก |
 | sorter/passage | E18-D80NK | ESP32 → Pi backend | active ของ `tray` (D011) และ events; วาง/ยกกล่องแล้วให้ backend รับการเปลี่ยนจริง |
 | sorter/gateway | AS5600 + BH1750 | Pi gateway process → Pi backend ผ่าน broker | angle_deg/light_lux และ valid; หมุนแม่เหล็ก/เปลี่ยนแสงให้เห็นข้อมูล Gateway จริง |
 
@@ -83,7 +83,7 @@ PDF ระบุส่ง slides และ video ใน myCourseVille **9 ธั
 
 ```mermaid
 flowchart LR
-    ESP["ESP32: HX711 / VL53L0X / E18"] -->|"weight / height / passage"| MQTT["Mosquitto บน Pi :1883"]
+    ESP["ESP32: HX711 / SRF05 / E18"] -->|"weight / height / passage"| MQTT["Mosquitto บน Pi :1883"]
     GW["Pi Gateway: AS5600 / BH1750"] -->|"gateway"| MQTT
     MQTT -->|"subscribe sorter/#"| API["Flask + Controller บน Pi :5000"]
     API -->|"cmd"| MQTT
@@ -111,7 +111,7 @@ Source ที่ยืนยันเส้นทาง: [firmware](../../firmwa
 ## หลักฐานที่ต้องเก็บก่อนอ้างว่าข้อ 10–13 ผ่าน
 
 1. เปิด Node/Gateway/backend กับ broker จริงบน Pi ใช้ source ปัจจุบัน ไม่ใช้ fake publisher แทนอุปกรณ์
-2. เก็บ topic + payload + เวลารับจาก weight/height/passage ให้เห็นค่าจริงเปลี่ยนจากคนละ sensor แสดง valid=true ของน้ำหนัก/ToF หลัง calibration พร้อม active ของ IR
+2. เก็บ topic + payload + เวลารับจาก weight/height/passage ให้เห็นค่าจริงเปลี่ยนจากคนละ sensor แสดง valid=true ของน้ำหนัก/SRF05 หลัง calibration พร้อม active ของ IR
 3. เก็บ sorter/gateway ให้เห็น AS5600 และ BH1750 ใช้งานจริง เพื่อรองรับข้อ 4 ด้วย
 4. อธิบายแต่ละ topic ว่ามาจากอะไร ใช้ทำอะไร และแสดง backend รับแล้วเปลี่ยน state/ข้อมูล ไม่ใช่แค่ list ชื่อ topics
 5. เปิด INFLUX_ENABLED=1 และเก็บผล write/query ข้อมูล IoT จริง หน้า history ต้องแสดง source=InfluxDB การเปิด fallback ไม่ทำให้ผ่านข้อ 12

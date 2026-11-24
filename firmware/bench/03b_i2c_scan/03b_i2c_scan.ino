@@ -1,11 +1,11 @@
-// ESP32-S3: SDA -> GPIO8, SCL -> GPIO9.
+// ESP32-S3: SDA -> GPIO12, SCL -> GPIO13.
 // Diagnostic only; no external sensor library required.
 #include <Wire.h>
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Wire.begin(8, 9);
+  Wire.begin(12, 13);
   Wire.setClock(100000);
   Serial.println("I2C SCANNER READY | SDA=8 SCL=9");
 }

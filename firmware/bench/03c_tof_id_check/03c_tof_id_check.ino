@@ -1,4 +1,4 @@
-// ESP32-S3: identify the chip answering at I2C 0x29 (SDA=GPIO8, SCL=GPIO9).
+// ESP32-S3: identify the chip answering at I2C 0x29 (SDA=GPIO12, SCL=GPIO13).
 // Read-only register check; does not configure or calibrate the sensor.
 // VL53L0X: reg 0xC0=0xEE, 0xC1=0xAA, 0xC2=0x10
 // VL53L1X: 16-bit reg 0x010F..0x0110 = 0xEA 0xCC
@@ -45,7 +45,7 @@ void printHex(int v) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Wire.begin(8, 9);
+  Wire.begin(12, 13);
   Wire.setClock(100000);
   Serial.println("TOF ID CHECK | addr 0x29 | SDA=8 SCL=9");
 }

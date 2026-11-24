@@ -27,6 +27,7 @@ Project/
 
 ## เริ่มอ่าน
 
+- [แบบสายพานพร้อมชุดชั่งที่เลือก — 23 พ.ย.](docs/hardware/CONVEYOR_MECHANICAL_DESIGN_TH.md) (แนวคิดกลไกใหม่; โค้ด BENCH ยังต้องปรับ)
 - [ขอบเขตและ Criteria](docs/project/PROJECT_BRIEF_TH.md)
 - [คู่มือต่อสายและติดตั้งบน Pi](docs/setup/BENCH_SETUP_TH.md)
 - [ย้ายจากโครง bench_hub เดิม](docs/setup/MIGRATION_TH.md)
