@@ -15,7 +15,8 @@ from .resolver import resolve_recipient, service_error
 
 
 def process_ocr_text(job_id: str, ocr_text, snapshot: Snapshot, client, *,
-                     vision_attempt: int = 1, artifacts: dict | None = None) -> dict:
+                     vision_attempt: int = 1, artifacts: dict | None = None,
+                     ocr_timings: dict | None = None) -> dict:
     # วัดเวลาเฉพาะขั้นที่โมดูลนี้ทำจริง: ai = เรียก AI รวม parse/ตรวจ, resolve = กฎทะเบียน
     # preprocess/ocr ไม่ได้รันในโมดูลนี้ (รับข้อความ OCR มาแล้ว) จึงเป็น null ไม่ใช่ 0
     started = time.perf_counter()
@@ -33,7 +34,10 @@ def process_ocr_text(job_id: str, ocr_text, snapshot: Snapshot, client, *,
         envelope["extraction_source"] = result.source
         envelope["grounding_issues"] = list(result.grounding_issues)
 
-    envelope["timings_ms"] = {"preprocess": None, "ocr": None, "ai": ai_ms,
+    # ocr_timings มาจาก ocr.read_text() เมื่อเริ่มจากภาพ; เริ่มจากไฟล์ข้อความจะเป็น null
+    ocr_timings = ocr_timings or {}
+    envelope["timings_ms"] = {"preprocess": ocr_timings.get("preprocess"),
+                              "ocr": ocr_timings.get("ocr"), "ai": ai_ms,
                               "resolve": envelope.get("timings_ms", {}).get("resolve")}
     return envelope
 

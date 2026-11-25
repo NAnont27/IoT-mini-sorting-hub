@@ -19,9 +19,11 @@ class CameraUnavailable(RuntimeError):
 
 
 class Camera:
-    def __init__(self, width=1280, height=720, min_interval_s=0.3):
+    def __init__(self, width=None, height=None, min_interval_s=0.3):
         self.enabled = os.getenv("CAMERA_ENABLED", "1") == "1"
-        self.size = (width, height)
+        # One configuration serves preview and OCR; labels need more pixels than a 720p preview.
+        self.size = (int(width or os.getenv("CAMERA_WIDTH", "1920")),
+                     int(height or os.getenv("CAMERA_HEIGHT", "1080")))
         self.min_interval_s = min_interval_s
         self._lock = threading.Lock()
         self._camera = None
@@ -44,13 +46,17 @@ class Camera:
             raise CameraUnavailable("camera start failed: " + type(exc).__name__ + ": " + str(exc)) from exc
         self._camera = camera
 
-    def snapshot_jpeg(self):
-        """Return JPEG bytes, reusing a frame newer than min_interval_s."""
+    def snapshot_jpeg(self, fresh=False):
+        """Return JPEG bytes; reuse a frame newer than min_interval_s unless fresh=True.
+
+        fresh=True is used for OCR capture so the label image is taken after the request.
+        """
         if not self.enabled:
             raise CameraUnavailable(self._error)
         with self._lock:
             now = time.monotonic()
-            if self._last_jpeg is not None and now - self._last_at < self.min_interval_s:
+            if (not fresh and self._last_jpeg is not None
+                    and now - self._last_at < self.min_interval_s):
                 return self._last_jpeg
             if self._camera is None:
                 try:

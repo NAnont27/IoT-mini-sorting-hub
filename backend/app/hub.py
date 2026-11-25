@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import queue
+import re
 import threading
 import time
 from pathlib import Path
@@ -13,11 +14,14 @@ import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, request
 
+from .ai_test import AiTester, AiTestUnavailable
 from .camera import Camera, CameraUnavailable
 from .controller import BINS, Controller
 from .store import Store
 
 ROOT = Path(__file__).resolve().parents[1]
+# Controller job ids are "JOB-" + 12 hex chars; also blocks path traversal in image routes.
+JOB_ID_PATTERN = re.compile(r"JOB-[0-9a-f]{12}")
 load_dotenv(ROOT / ".env")
 logging.basicConfig(level=logging.INFO)
 
@@ -91,8 +95,9 @@ def build_app():
             time.sleep(0.05)
 
     app = Flask(__name__)
-    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
+    app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # OCR test uploads phone photos
     camera = Camera()
+    ai_tester = AiTester()
 
     @app.get("/")
     def index():
@@ -121,7 +126,7 @@ def build_app():
     @app.post("/api/settings")
     def settings():
         data = _json_object()
-        allowed = {"max_weight_g", "max_height_mm", "save_angle_for"}
+        allowed = {"max_weight_g", "max_height_mm", "save_angle_for", "mode"}
         unknown = sorted(set(data) - allowed)
         if unknown:
             raise ValueError("Unknown settings: " + ", ".join(unknown))
@@ -137,6 +142,10 @@ def build_app():
                     if not math.isfinite(value) or value <= 0:
                         raise ValueError(name + " must be positive and finite")
                     updated[name] = value
+            if "mode" in data:
+                if data["mode"] not in {"bench", "ai"}:
+                    raise ValueError("mode must be bench or ai")
+                updated["mode"] = data["mode"]
             if updated["max_weight_g"] is not None and updated["max_weight_g"] <= updated["min_weight_g"]:
                 raise ValueError("max_weight_g must exceed min_weight_g")
             if "save_angle_for" in data:
@@ -196,6 +205,59 @@ def build_app():
         except CameraUnavailable as exc:
             return jsonify(error="Camera unavailable: " + str(exc)), 503
         return Response(jpeg, mimetype="image/jpeg")
+
+    image_dir = ROOT / "data" / "images"
+
+    def job_image_path(job_id, attempt):
+        if not JOB_ID_PATTERN.fullmatch(str(job_id)) or not isinstance(attempt, int) or attempt < 1:
+            raise ValueError("Invalid job_id/vision_attempt")
+        return image_dir / f"{job_id}_a{attempt}.jpg"
+
+    @app.post("/api/camera/capture")
+    def camera_capture():
+        """Vision worker: take a fresh label image for the job/attempt that is waiting for AI."""
+        data = _json_object()
+        job_id, attempt = data.get("job_id"), data.get("vision_attempt")
+        with lock:
+            job = controller.job
+            if (not job or job["state"] != "WAIT_VISION" or job["job_id"] != job_id
+                    or job["vision_attempt"] != attempt):
+                raise ValueError("No matching job waiting for vision")
+        path = job_image_path(job_id, attempt)
+        try:
+            jpeg = camera.snapshot_jpeg(fresh=True)
+        except CameraUnavailable as exc:
+            return jsonify(error="Camera unavailable: " + str(exc)), 503
+        image_dir.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(jpeg)
+        response = Response(jpeg, mimetype="image/jpeg")
+        response.headers["X-Image-Path"] = str(path)
+        return response
+
+    @app.get("/api/camera/job/<job_id>/<int:attempt>.jpg")
+    def camera_job_image(job_id, attempt):
+        path = job_image_path(job_id, attempt)
+        if not path.is_file():
+            return jsonify(error="No image for this job/attempt"), 404
+        return Response(path.read_bytes(), mimetype="image/jpeg")
+
+    @app.post("/api/ai/test")
+    def ai_test():
+        """OCR/extraction test page: body = JPEG/PNG upload, or empty with ?capture=1."""
+        use_ai = request.args.get("ai", "1") == "1"
+        if request.args.get("capture") == "1":
+            try:
+                image = camera.snapshot_jpeg(fresh=True)
+            except CameraUnavailable as exc:
+                return jsonify(error="Camera unavailable: " + str(exc)), 503
+        else:
+            image = request.get_data()
+            if not image:
+                raise ValueError("Send an image body or use ?capture=1")
+        try:
+            return jsonify(ai_tester.run(image, use_ai=use_ai))
+        except AiTestUnavailable as exc:
+            return jsonify(error="OCR/AI test unavailable: " + str(exc)), 503
 
     @app.get("/api/camera/status")
     def camera_status():

@@ -175,7 +175,7 @@ Adapter +5V ── R1 1kΩ ──● A ── R2 10kΩ ──● B ── GPIO11
 
 AS5600 ต้องใช้แม่เหล็ก Diametric ตรงศูนย์กลางชิป เริ่ม air gap 1–2 มม. ปรับจน angle_valid=true หมุนอยู่เหนือชิป ไม่เลื่อนแม่เหล็กวนรอบบอร์ด ค่ามุม 359°→0° เป็นการวนปกติ
 
-Camera Module 3 อยู่ในขอบเขตทีม AI ใช้สาย 15→22 pin สำหรับ Pi5 ต่อเฉพาะตอน Pi ถอดไฟ ไม่ต้องใช้กล้องเพื่อผ่าน BENCH ขั้นนี้ และห้ามรายงาน BENCH เป็น camera/OCR/AI ครบ Criteria
+Camera Module 3 ใช้สาย 15→22 pin สำหรับ Pi5 ต่อเฉพาะตอน Pi ถอดไฟ backend บน Pi เป็นเจ้าของกล้อง (Picamera2: `rpicam-hello --list-cameras` ต้องเห็นกล้อง และ `.venv` ต้องเห็น system site-packages เพื่อ import picamera2) ไม่ต้องใช้กล้องเพื่อผ่าน BENCH ขั้นนี้ และห้ามรายงาน BENCH เป็น camera/OCR/AI ครบ Criteria
 
 ## 7. โครงสร้างซอฟต์แวร์และการเชื่อมสองเครื่อง
 
@@ -189,8 +189,10 @@ Pi gateway/gateway_sensors.py -- MQTT --> backend/app/hub.py
                                           └─ Flask API :5000
                                                 ↕ HTTP ผ่าน LAN
 คอม: frontend Next.js :3000 -- /api proxy ตาม BACKEND_URL
+      ├─ /api/ai/test --> ai/run_test_server.py :5100 (PaddleOCR + Gemini บนคอม, D026)
+      └─ ai/run_worker.py --HTTP--> /api/ai/pending, /api/camera/capture, /api/ai/result บน Pi
           ↕
-Browser บนคอม: http://localhost:3000
+Browser บนคอม: http://localhost:3000 (หน้าทดสอบ OCR: /ocr-test)
 ```
 
 หัวข้อ MQTT: sorter/weight, sorter/height, sorter/passage, sorter/gateway, sorter/cmd, sorter/ack, sorter/actuator, sorter/status, sorter/vision
@@ -211,7 +213,7 @@ ESP32 publish QoS0 ตาม PubSubClient จึงส่ง passage event ring 
 Set-Location C:/Users/nanon/Desktop/CU/IoT/Project
 ssh nanont@pi-673305942.local "mkdir -p ~/mini-sorting-hub/backend/app ~/mini-sorting-hub/backend/tests ~/mini-sorting-hub/gateway/bench"
 scp backend/__init__.py backend/requirements.txt backend/config.example.json backend/.env.example nanont@pi-673305942.local:~/mini-sorting-hub/backend/
-scp backend/app/__init__.py backend/app/__main__.py backend/app/hub.py backend/app/controller.py backend/app/store.py nanont@pi-673305942.local:~/mini-sorting-hub/backend/app/
+scp backend/app/__init__.py backend/app/__main__.py backend/app/hub.py backend/app/controller.py backend/app/store.py backend/app/camera.py backend/app/ai_test.py nanont@pi-673305942.local:~/mini-sorting-hub/backend/app/
 scp backend/tests/test_api.py backend/tests/test_controller.py backend/tests/test_e18_interface.py nanont@pi-673305942.local:~/mini-sorting-hub/backend/tests/
 scp gateway/gateway_sensors.py gateway/requirements.txt gateway/.env.example nanont@pi-673305942.local:~/mini-sorting-hub/gateway/
 scp gateway/bench/as5600_test.py gateway/bench/bh1750_test.py nanont@pi-673305942.local:~/mini-sorting-hub/gateway/bench/
@@ -441,11 +443,17 @@ STABILITY_G=5 และ WINDOW=10 เป็นค่าเริ่มต้น�
 - หาก Backend ถูกปิดกลาง job เมื่อเปิดใหม่จะบันทึก INTERRUPTED/FAULT และให้คนเคลียร์ ไม่เดินต่อจากสถานะเก่าเอง
 - วันถัดไปเปิด Pi/ESP32/Adapter ตามลำดับปลอดภัย รัน Backend/Gateway บน Pi และ Next.js บนคอมตามหัวข้อ 13 แล้ว commissioning checks ก่อนเริ่มเสมอ ไม่ต้อง apt/pip ใหม่ทุกครั้ง
 
-## 18. เชื่อมทีม AI ภายหลัง
+## 18. โหมด AI — กล้องบน Pi, OCR/Gemini บนคอม (D025/D026)
 
-อ่าน `docs/ai/AI_INTERFACE_TH.md` แยก มี GET pending และ POST result ใช้ job_id/vision_attempt กันผลเก่า แต่ **ตอนนี้คง mode=bench ตามที่ผู้ใช้เลือก** ไม่มีการอ้างว่าเลือกบนเว็บเป็น AI
+PaddleOCR segfault บน Pi 5 จึงรัน OCR และ Gemini บน**คอม** ส่วน Pi ยังถือกล้อง controller MQTT และฐานข้อมูล อ่านรายละเอียด API ที่ `docs/ai/AI_INTERFACE_TH.md`
 
-ก่อนส่งงานจริงต้องเชื่อมกล้อง/OCR/Gemini/resolver, CSV preview/activation และชั้นคั่นจากแผนหลัก รวมการแสดงภาพ/ข้อมูลผู้รับบนเว็บ รุ่น bench นี้ยังไม่มี UI นำเข้า CSV หรือแสดงรูปฉลาก และยังไม่ใช่ระบบครบ Criteria พร้อมส่ง
+1. บนคอม (PowerShell ราก Project): ติดตั้ง `.venv\Scripts\python.exe -m pip install paddlepaddle paddleocr opencv-python-headless google-genai` และสร้าง `ai/.env` จาก `ai/.env.example` (GEMINI_API_KEY/GEMINI_MODEL; ไม่ commit)
+2. ทดสอบก่อนที่หน้า **/ocr-test**: รัน `.venv\Scripts\python.exe ai\run_test_server.py --backend http://<IP Pi>:5000` แล้ว restart `npm run dev`; อัปโหลดภาพฉลากสมมติหรือกด "ถ่ายจากกล้อง Pi"
+3. ใช้งานจริง: รัน `.venv\Scripts\python.exe ai\run_worker.py --backend http://<IP Pi>:5000` ค้างไว้ แล้วที่หน้าเว็บ พักเครื่อง → ตั้งค่า → **เปลี่ยนเป็น AI** → กดเริ่ม
+4. วางกล่อง → `WAIT_VISION` → worker ขอภาพ (`/api/camera/capture` เก็บ `backend/data/images/<job>_a<n>.jpg`) → OCR → Gemini → ทะเบียน → `/api/ai/result` → controller หมุนรางตามช่อง; ภาพและผลแสดงในงานปัจจุบัน
+5. กล้อง/OCR ล้ม → FAULT; Gemini ล่มหรือคอมไม่ตอบเกิน `vision_timeout_s` (60 s) → PAUSED_AI รอกด "ลอง AI ใหม่"
+
+ยังใช้ทะเบียนตัวอย่าง `ai/fixtures/registry_demo.csv` ยังไม่มี UI นำเข้า CSV/ชั้นคั่น ใช้ฉลากข้อมูลสมมติเท่านั้น และยังไม่ใช่หลักฐานครบ Criteria จนกว่าจะทดสอบกล่องจริงครบวงจร
 
 ## 19. ตรวจซอฟต์แวร์และข้อจำกัด
 

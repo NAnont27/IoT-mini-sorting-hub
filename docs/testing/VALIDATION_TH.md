@@ -31,7 +31,7 @@ Tests state machine ตรวจ ACK ไม่เท่ากับถึงช�
 - Pi–Mosquitto–InfluxDB–ESP32 ผ่าน Wi-Fi/MQTT ทั้งระบบ; HTTP smoke ด้านบนไม่ใช่ผล integration นี้
 - การวัดแรงดัน IR, calibration, ToF, การรับโหลด Servo และ IR ถาดตัวเดียว (D011) ขณะวาง/ยกกล่องจริง
 - การย้าย config/data จริงจาก Pi เดิม และการเชื่อม Next.js บนคอมไป Flask บน Pi ผ่าน LAN จริง
-- กล้อง/OCR/Gemini/resolver/CSV และการคัดกล่องด้วยโครงจริง
+- กล้องจริงบน Pi กับ OCR/Gemini บนคอมผ่าน LAN, CSV ทะเบียนจริง และการคัดกล่องด้วยโครงจริง (25 พ.ย. ตรวจในเครื่องแล้วเท่านั้น: PaddleOCR อ่านฉลากสมมติสังเคราะห์ถูกครบ conf 0.96, ~2.8–3.8 s/ภาพ; Gemini จริง → RESOLVED/A; E2E backend (MQTT จำลอง) + worker → controller POSITION/A; PaddlePaddle บน Pi 5 segfault จึงย้าย OCR ไปคอม D026)
 - ความแม่นยำ เวลา throughput และผลเทียบการคัดโดยเจ้าหน้าที่
 
 วงจร R v2 ใช้สมมติฐานไฟ 5V ±5%, R ±5%, GPIO VDD 3.3V และ NPN LOW ≤0.4V ในการคำนวณ ไม่ใช่ผลวัดเซนเซอร์ผู้ใช้

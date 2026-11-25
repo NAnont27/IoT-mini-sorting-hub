@@ -1,6 +1,6 @@
 # AGENTS.md — Mini Sorting Hub
 
-อัปเดตล่าสุด: **24 พฤศจิกายน 2026 (Asia/Bangkok)**
+อัปเดตล่าสุด: **25 พฤศจิกายน 2026 (Asia/Bangkok)**
 
 ไฟล์ handoff เดียวของโปรเจกต์สำหรับคนและ agent ที่มาทำต่อ ไม่สร้าง `Agent.md`/`agent.md` ซ้ำ; `frontend/AGENTS.md` เป็นกฎ framework ของ Next.js เท่านั้น
 
@@ -24,11 +24,11 @@
 
 ## Latest Handoff — อ่านก่อนทำต่อ
 
-**สอบถามเซนเซอร์ 24 พ.ย.:** ผู้ใช้ส่งภาพ HY-SRF05 และถามว่าอ่านระยะเป็นตัวเลขได้ไหม อธิบายว่าอ่านเวลาพัลส์ Echo แล้วคำนวณ cm/mm ได้ และใช้ระยะถาดว่างลบระยะถึงกล่องเพื่อประมาณความสูงได้หลังทดลอง Echo ของโมดูล 5V ต้องแปลงระดับก่อนเข้า ESP32-S3; ยังไม่ได้ขอเปลี่ยนแทน VL53L0X ไม่มีการเลือก GPIO ใหม่หรือแก้ firmware วงจร ToF ล่าสุดยังเป็น D023 GPIO12/13
+**AI/OCR 25 พ.ย. (D025/D026):** โหมด AI ครบใน source: กล้อง Pi → `/api/camera/capture` → vision worker บน**คอม** (OpenCV + PaddleOCR PP-OCRv5 th → Gemini Flash-Lite → resolver) → `/api/ai/result` → controller; หน้า `/ocr-test` ทดสอบภาพเดียวผ่าน `ai/run_test_server.py` (:5100) PaddlePaddle **segfault บน Pi 5** จึงไม่รัน OCR บน Pi; ทดสอบในเครื่องผ่าน (ภาพสมมติ → RESOLVED/A) ยังไม่ทดสอบกล้องจริง/กล่องจริง/ESP32 ในโหมด AI
 
 **แบบกลไกที่เลือก 23 พ.ย. (D022):** ผู้ใช้ยอมรับภาพสายพานพร้อมชุดชั่ง v2 และขอเขียนเป็น Markdown แล้ว: [CONVEYOR_MECHANICAL_DESIGN_TH.md](docs/hardware/CONVEYOR_MECHANICAL_DESIGN_TH.md) เป็นแหล่งอ้างอิงกลไกใหม่ มีสายพานพากล่องตรง ๆ ไปสามช่อง A/B/HOLD, MG996R ต่อเพลาขับ, MG90S ตัวปัดเคลื่อนตาม และ Load cell+HX711 รองชุดสายพานแยกจากช่องรับ โครงฟิวเจอร์บอร์ด/ไม้ ตั้งใจไม่ใช้น็อตโครง **เลือกแนวทางแล้ว แต่ยังไม่ยืนยันขนาด/ระยะ 180°/แรง/พิกัด Load cell/จุดยึด/วิธีขับร่วมตัวปัด** ภาพเก่า D014–D020 เป็นประวัติ ไม่ใช้ประกอบจริง
 
-**สถานะ source/runtime:** งานรอบนี้เป็นเอกสาร ไม่แก้โค้ดหรือ deploy; firmware/controller ยังเป็น BENCH D011 ประตู+รางหมุน ต้องปรับลำดับสายพาน–ปัด–คืนต้นทาง และ E18/ToF ที่จุดรับก่อนใช้กลไกใหม่ AS5600 วัดมุมเพลาไม่ยืนยันตำแหน่งกล่องเมื่อมีการลื่น ยังไม่มีเซนเซอร์ปลายทาง (`destination_sensed=false`) ไม่อ้างว่าระบบจริงผ่านจากภาพหรือเอกสาร
+**สถานะ source/runtime:** firmware/controller ยังเป็น BENCH D011 ประตู+รางหมุน (ยังไม่ปรับเป็นสายพาน D022) มีโหมด `bench`/`ai` สลับได้จากหน้าเว็บ; ยังไม่มีเซนเซอร์ปลายทาง (`destination_sensed=false`) ไม่อ้างว่าระบบจริงผ่านจากเอกสาร/tests
 
 **Checkpoint 21 พ.ย. 2026 — BENCH bring-up บนอุปกรณ์จริง** (ทุกแถวมาจากผู้ใช้รายงาน ไม่ใช่ agent ทดสอบเอง)
 
@@ -42,25 +42,29 @@
 | Web → MQTT cmd → ESP32 → Servo | ✅ ปุ่มทดสอบ Servo บนเว็บใช้ได้ (ยังไม่ยืนยันมุมด้วย AS5600 / ยังไม่รับโหลด) |
 | BH1750 | ✅ เคยผ่าน |
 | E18 ถาด GPIO11 | ✅ 24 พ.ย. เว็บแสดง "ว่าง" เมื่อไม่มีของ และ "มีกล่อง" เมื่อวางกล่อง (ผู้ใช้รายงาน; ยังไม่มีผลวัดแรงดันจุด B) |
-| ความสูง | 🔁 24 พ.ย. เปลี่ยน VL53L0X → **HY-SRF05** (D024) เพราะ ToF init fail เมื่อเปิด Adapter; firmware แก้แล้ว ยังไม่ upload/ทดสอบ (`03e`) และต้อง `H` ใหม่ |
-| HX711 | ⏳ ยังไม่ T/C เพราะไม่มีน้ำหนักอ้างอิงที่ชั่งจริง |
-| AS5600 | ⏳ ยังไม่ `angle_valid` / ยังไม่จำมุม A/B/HOLD |
+| ความสูง | 🟡 25 พ.ย. HY-SRF05 (D024) `03e` วัดได้แล้วหลังแก้สาย (ผู้ใช้รายงาน); ยังไม่ยืนยัน `hub_node` + `H` + เทียบไม้บรรทัด |
+| HX711 | ✅ 25 พ.ย. T/C ด้วยของชั่งจริง 61.4 g, factor ≈527 counts/g ผู้ใช้ยืนยันผล (รอบก่อนจุดศูนย์ไหลจากการยึด แก้แล้ว); ยังไม่ตรวจน้ำหนักอ้างอิงที่หนักกว่า |
+| AS5600 | 🟡 25 พ.ย. บัส I2C บน Pi หายเป็นพักเพราะสายชนกัน แก้แล้ว (ผู้ใช้รายงาน); ยังไม่มีผล MAGNET_OK นิ่ง/จำมุม A/B/HOLD |
 | ปุ่ม / LED | ⏳ ยังไม่ยืนยัน |
-| กล้อง → เว็บ | 🔁 24 พ.ย. เพิ่ม `backend/app/camera.py` (Picamera2) + `GET /api/camera/snapshot.jpg` / `/api/camera/status` และแผง CameraPanel รีเฟรช ~1s; แสดงภาพอย่างเดียว ยังไม่ส่ง OCR/AI; ยังไม่ทดสอบบน Pi |
-| กล้อง / AI | ⏳ โมดูล `ai/` (resolver, extraction, prompt, Gemini client, pipeline, CLI) อยู่บน dev: unittest 77 ผ่าน, เรียก Gemini จริง 1 รอบได้ `RESOLVED`/A (ทีม AI รายงาน) — ยังไม่มี OCR/กล้อง, ยังไม่วัดเวลา, ยังไม่เชื่อม `/api/ai/*` |
+| กล้อง → เว็บ | 🔁 `backend/app/camera.py` (Picamera2, 1920×1080) + preview บน Dashboard; ยังไม่ยืนยันภาพจากกล้องจริงบน Pi |
+| OCR | 🔁 25 พ.ย. `ai/mini_sorting_ai/ocr.py` (OpenCV + PaddleOCR 3.7 / paddlepaddle 3.3.1) บนคอม Windows: ฉลากสมมติภาพพิมพ์ 6 บรรทัดอ่านถูกครบ conf 0.96, ~3.8 s/ภาพ (warm) ด้วย PP-OCRv5_mobile_det + th_PP-OCRv5_mobile_rec และ `enable_mkldnn=False`; ภาพ → OCR → mock AI → RESOLVED/A ผ่าน — ยังไม่ทดสอบ Gemini จริง/ภาพกล้องจริง/บน Pi, ยังไม่ต่อ backend (D025) |
+| AI → ระบบ | 🔁 25 พ.ย. ต่อแล้วใน source: `POST /api/camera/capture` (ภาพสดเก็บ `backend/data/images/<job>_a<n>.jpg`), `GET /api/camera/job/<job>/<n>.jpg`, settings `mode` bench/ai, vision worker `ai/run_worker.py` (pending → capture → PaddleOCR → Gemini → `/api/ai/result`), VisionPanel + ปุ่มสลับโหมดบนเว็บ; E2E ในเครื่อง (MQTT จำลอง, OCR จริง, AI จำลอง) controller → POSITION/A — ยังไม่รันบน Pi/กล้อง/ESP32 จริง |
+| หน้าทดสอบ OCR | ✅ 25 พ.ย. ผู้ใช้ยืนยัน `/ocr-test` ใช้งานได้บนระบบจริง (Next :3000 → `ai/run_test_server.py` :5100 บนคอม D026; อัปโหลดภาพ → OCR → Gemini → ทะเบียนตัวอย่าง) — ยังไม่ยืนยันปุ่มถ่ายจากกล้อง Pi และโหมด AI กับกล่องจริง |
+| Paddle บน Pi | ❌ 25 พ.ย. paddlepaddle บน Pi 5 (aarch64, Python 3.13) ดาวน์โหลดโมเดลแล้ว **Segmentation fault** และเดิมทำ backend ดับทั้งตัว → แก้ `ai_test.py` ให้ OCR รันใน child process (crash/timeout → 503, backend ไม่ล้ม); vision worker เป็น process แยกอยู่แล้ว; ยังต้องหา OCR ที่รันบน Pi ได้ (ทางเลือก RapidOCR/ONNX ใช้โมเดล PP-OCRv5 เดิม) |
+| กล้อง / AI | 🔁 25 พ.ย. ดูแถว OCR / AI → ระบบ / หน้าทดสอบ OCR / Paddle บน Pi ด้านล่าง; Gemini key อยู่ `ai/.env` บนคอม (ignored) |
 | Flag ทดสอบ | ⚠️ `BENCH_SKIP_SENSOR_CHECKS=1` **ยังเปิดใน `backend/.env` บน Pi** ห้ามใช้ผลระหว่างเปิดเป็นหลักฐาน |
 
-**Git ณ ตอนนี้:** งาน D011 + ปุ่ม Servo + เอกสาร + bench 03c/03d/05b/05c merge เข้า `origin/dev` แล้ว (`b2ed8b7`, ไม่เปิด PR) รวมงานทีม AI แล้ว — ดู [Git and Deployment](#git-and-deployment)
+**Git ณ ตอนนี้:** `origin/dev` มีงานถึงกล้อง→เว็บ (`bf4f656`) และ D024/SRF05 (merge `2b50947`); งาน 25 พ.ย. (HX711 log, OCR/AI/worker/หน้าทดสอบ/D025–D026/เอกสาร) **ยังไม่ commit** — ผู้ใช้ commit/push เอง แยก branch ต่องาน
 
 **งานที่เหลือตามลำดับ**
 
 1. ~~E18~~ ✅ 24 พ.ย.
 2. SRF05: ต่อวงจร ECHO 10k/15k → `03e` วัดได้นิ่ง → upload `hub_node` → `H` ถาดว่าง
-3. HX711: `T` แล้ว `C <กรัมจริง>` ด้วยน้ำหนักอ้างอิงที่ชั่งแล้ว
+3. ~~HX711~~ ✅ 25 พ.ย.
 4. AS5600: ให้ valid → ใช้ปุ่มทดสอบ Servo พาแกนไป 60/90/120 แล้ว "จำมุม" A/B/HOLD → ตั้ง max weight/height
 5. ลบ flag `BENCH_SKIP_SENSOR_CHECKS` แล้วให้กล่องแดงหายเองโดยไม่ข้าม
 6. คู่มือขั้น 16: ทดสอบครบ flow + กรณี fault
-7. รวมโมดูล `ai/` เข้า `/api/ai/pending` + `/api/ai/result` และต่อกล้อง
+7. AI เข้า flow: source พร้อม (25 พ.ย.) → ติดตั้ง Paddle/google-genai บน Pi, รัน worker, สลับ mode ai แล้วทดสอบกล่องจริง
 8. เก็บหลักฐาน Metric: MQTT trace ≥3 topics, Influx query ย้อนหลัง, Dashboard, FPS/Accuracy, slides, video (ส่ง **9 ธ.ค. 09:00**)
 9. ภาพ `docs/hardware/wiring_v2/` แบบ E18 ตัวเดียว (ผู้ใช้ให้ทำทีหลัง)
 
@@ -82,7 +86,7 @@
 | Backend | บน Pi: Flask + Paho MQTT; controller ชุดเดียว |
 | Database | InfluxDB v2 (telemetry) + SQLite (jobs/events) |
 | Frontend | บนคอม: Next.js App Router + TypeScript + Tailwind; `/api` proxy ไป Flask บน Pi (D010) |
-| AI รุ่นส่งงาน | Camera Module 3 → OCR → Gemini → ทะเบียน/กฎ → A/B/HOLD (โมดูล `ai/` ของทีม AI) |
+| AI รุ่นส่งงาน | Camera Module 3 (Pi) → HTTP → OCR (PaddleOCR) + Gemini บน**คอม** (D026) → ทะเบียน/กฎ → `/api/ai/result` → A/B/HOLD |
 | กลไก | เลือกแนวทางสายพาน+ชุดชั่ง D022 แล้ว; ดูแบบ MD กลไกใหม่ ส่วน runtime ยังเป็น BENCH D011 ประตู+รางหมุน ยังไม่ยืนยันแบบผลิต/ระยะ/พิกัด |
 | IR | **E18-D80NK ตัวเดียวที่ถาด GPIO11 (`tray`)** ผ่านวงจร R v2; ไม่มี PC817; ไม่มี IR ช่อง (D011) |
 | ระยะพัฒนา | BENCH v2 บนโต๊ะ เลือกช่องบนเว็บ ยกกล่องด้วยมือ |
@@ -192,7 +196,9 @@ Project/
 | `firmware/esp32/hub_node/hub_node.ino` | Firmware รวม |
 | `backend/app/hub.py` / `controller.py` / `store.py` | HTTP+MQTT / state machine / SQLite+Influx |
 | `gateway/gateway_sensors.py` | AS5600/BH1750 → MQTT |
-| `frontend/src/features/dashboard/` | Dashboard, Settings, Jobs, History, ServoTestPanel |
+| `frontend/src/features/dashboard/` | Dashboard, Settings (สลับโหมด), Jobs, History, ServoTestPanel, CameraPanel, VisionPanel |
+| `frontend/src/features/ocr-test/` + `src/app/ocr-test/` | หน้าทดสอบ OCR/extraction `/ocr-test` |
+| `ai/mini_sorting_ai/ocr.py` / `worker.py`, `ai/run_worker.py`, `ai/run_test_server.py` | OCR, vision worker และ service หน้าทดสอบ (รันบนคอม D026) |
 | `docs/hardware/wiring_v2/` | ผัง v2 — **ภาพยังวาด E18 สี่ตัว ล้าสมัยตาม D011** ยึด pin map ในไฟล์นี้/คู่มือ |
 
 เก่า/ไม่ใช้เป็นแบบ: `archive/hardware/wiring_v1/`, `archive/hardware/esp32_v1.png`, ZIP v1/v2 ใน `artifacts/legacy/`, `docs/project/HW_BENCH_PLAN_TH.md` (แผน 11 พ.ย.), `docs/project/FEATURE_DECISIONS.md` (อ้างอิงประกอบ) — ถ้าขัดกับไฟล์นี้ ให้แก้เอกสารให้ตรงผลล่าสุด
@@ -347,6 +353,8 @@ BH1750 + AS5600 ขนานบนบัสเดียว: **pin1 = 3.3V, pin6 
 ### API and AI
 
 - ชื่อฟิลด์: `target_bin`, `resolved_room`, `resolved_floor`, `reason_code`; job มี `destination_sensed`
+- OCR test: `POST /api/ai/test?ai=0|1[&capture=1]` body = JPEG/PNG (สูงสุด 10 MB) ใช้ทะเบียน demo และ `ai/.env` ของเครื่องที่รัน backend; แสดงชื่อ/ห้องผู้รับบนหน้าเว็บ จึงใช้ฉลากข้อมูลสมมติเท่านั้น; Next `experimental.proxyTimeout` = 120 s
+- Vision: `POST /api/camera/capture` {job_id, vision_attempt} ใช้ได้เฉพาะ job ที่ WAIT_VISION ตรงกัน ถ่ายภาพใหม่ (ไม่ใช้ cache) เก็บ `backend/data/images/` และ header `X-Image-Path`; `GET /api/camera/job/<job_id>/<n>.jpg`; `/api/settings` รับ `mode` bench/ai (พักและไม่มี job); worker `ai/run_worker.py` ส่ง PIPELINE_ERROR เมื่อถ่าย/OCR ไม่ได้ (→ FAULT), Gemini ล่ม → SERVICE_ERROR (→ PAUSED_AI); ชื่อ/ห้องผู้รับไม่เก็บใน job (VISION_PUBLIC_FIELDS)
 - Camera: `GET /api/camera/snapshot.jpg` (JPEG, 503+เหตุผลเมื่อไม่มีกล้อง), `GET /api/camera/status`; `CAMERA_ENABLED` ใน `backend/.env`; Pi ต้องมี `python3-picamera2` และ `.venv` เห็น system site-packages; ห้ามรันโปรแกรมอื่นจับกล้องพร้อม backend
 - Routes: `/api/status`, `/api/control`, `/api/settings`, `/api/jobs`, `/api/history`, `GET /api/ai/pending`, `POST /api/ai/result` (RESOLVED/HOLD/RETRY_CAPTURE/SERVICE_ERROR/PIPELINE_ERROR ตาม `docs/ai/AI_INTERFACE_TH.md`)
 - โมดูล `ai/` ของทีม AI ใช้ต่อ ไม่สร้าง pipeline ซ้ำ; AI ไม่สั่ง GPIO/MQTT มอเตอร์ตรง
@@ -371,6 +379,8 @@ BH1750 + AS5600 ขนานบนบัสเดียว: **pin1 = 3.3V, pin6 
 |---|---|---|
 | Pi terminal 1 | `cd ~/mini-sorting-hub && .venv/bin/python -m backend.app` | 5000 |
 | Pi terminal 2 | `cd ~/mini-sorting-hub && .venv/bin/python gateway/gateway_sensors.py` | — |
+| คอม PowerShell 2 (โหมด AI, D026) | `.venv\Scripts\python.exe ai\run_worker.py --backend http://<pi-ip>:5000` | — |
+| คอม PowerShell 3 (หน้า /ocr-test) | `.venv\Scripts\python.exe ai\run_test_server.py --backend http://<pi-ip>:5000` | 5100 |
 | คอม PowerShell | `Set-Location …/Project/frontend; npm run dev` | 3000 |
 | Pi services | Mosquitto (systemd), `mini-sort-influx` (Docker, `127.0.0.1:8086`) | 1883 / 8086 |
 
@@ -465,6 +475,8 @@ BH1750 + AS5600 ขนานบนบัสเดียว: **pin1 = 3.3V, pin6 
 | D022 | 23 พ.ย. | ผู้ใช้ตอบรับภาพ D021 และขอเขียน MD; จัดทำแบบสายพานพร้อมชุดชั่ง รวมกลไก โฟลว์ที่ตั้งใจ วิธีชั่ง ข้อจำกัดระยะ 180° งานปรับโค้ด และขั้นทดลอง | confirmed เลือกแนวทางภาพ v2; รายละเอียดมิติ/พิกัด/ข้อต่อ/ตัวปัดยังต้องทดลอง เอกสารเท่านั้น ไม่เปลี่ยน runtime |
 | D023 | 24 พ.ย. | (superseded by D024) ผู้ใช้ขอย้าย I2C ของ VL53L0X จาก GPIO8/9 ไป **GPIO12 (SDA) / GPIO13 (SCL)** หลัง ToF init fail เมื่อเปิด Adapter; ขาว่างจาก D011 ไม่ใช่ strapping; ผลทดสอบชี้ว่าสาเหตุน่าจะเป็นไฟ/GND ฝั่ง Adapter การย้ายขาอาจไม่แก้ | confirmed by user |
 | D024 | 24 พ.ย. | ผู้ใช้เลือก**เปลี่ยน VL53L0X เป็น HY-SRF05** และให้แก้ทุกอย่างที่เกี่ยวข้อง หลัง ToF init fail เมื่อเปิด Adapter; TRIG GPIO12, ECHO GPIO13 ผ่าน 10k/15k (ECHO 5V), VCC Adapter 5V; MQTT `sorter/height` คงฟิลด์เดิม; แทน D023 | confirmed by user |
+| D025 | 25 พ.ย. | ผู้ใช้เลือก **PaddleOCR** เป็นตัว OCR (เทียบ Tesseract/RapidOCR/EasyOCR/Gemini vision/Cloud Vision แล้ว) ใช้ OpenCV preprocess + PaddleOCR `lang=th` → ข้อความ → `process_ocr_text()` เดิม; Gemini ยังรับเฉพาะข้อความ ไม่อ่านภาพเอง (คงขั้น OCR แยกตาม Metric 7.1) | confirmed by user; ยังไม่ติดตั้ง/วัดผลบน Pi |
+| D026 | 25 พ.ย. | ผู้ใช้เลือก**รัน OCR/AI บนคอม** หลัง paddlepaddle segfault บน Pi 5: vision worker (`ai/run_worker.py --backend http://<pi>:5000`) และ service หน้าทดสอบ (`ai/run_test_server.py`, :5100; Next rewrite `/api/ai/test` → `AI_SERVICE_URL`) รันบนคอม; Pi ยังถือกล้อง/controller/MQTT/DB; ภาพส่งผ่าน HTTP ใน LAN | confirmed by user; คอมต้องเปิดตลอดระหว่างโหมด AI |
 
 เปลี่ยนคำตัดสินให้เพิ่มแถวใหม่ระบุว่าแทน ID ใด ไม่ลบแถวเดิม
 

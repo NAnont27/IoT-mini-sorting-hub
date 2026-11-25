@@ -9,7 +9,7 @@
 **โครงปัจจุบันยังรองรับการทำให้ครบเกณฑ์ได้ และการให้ frontend รันบนคอมไม่ทำให้ผิดเกณฑ์ แต่ implementation และหลักฐานตอนนี้ยังไม่ครบสำหรับอ้างว่าผ่านทั้งหมด**
 
 - Hardware 5 คะแนน: เลือกอุปกรณ์/ผัง/โค้ดรองรับครบหมวด ต้องยืนยันการ integrate จริง
-- Application 6 คะแนน: ยังขาด pipeline กล้อง/OCR/AI ที่รวมใช้งานจริงและผลประเมินใน workspace นี้
+- Application 6 คะแนน: 25 พ.ย. มี pipeline ใน source แล้ว (กล้อง Pi → PaddleOCR + Gemini บนคอม → resolver → controller) ทดสอบในเครื่องผ่าน แต่ยังขาดผลกับกล้อง/กล่องจริงและผลประเมิน FPS/Accuracy
 - System 7 คะแนน: มี source MQTT/server/Influx/Dashboard รองรับ ต้องสาธิตข้อมูลจริงครบเส้นทาง โดยเฉพาะ write/query Influx และ MQTT จากอุปกรณ์
 - Presentation/Video 7 คะแนน: มีแผนและเนื้อหาตั้งต้น ยังไม่พบ slides/video ส่งงานในชุด source ที่ตรวจ
 
@@ -26,10 +26,10 @@
 | 3 | 1 | Sensor Node อย่างน้อย 2 sensors | ESP32 มี Load cell+HX711, SRF05 และ E18; มีเกินขั้นต่ำ | Node ส่งข้อมูลเซนเซอร์จริงเข้า backend |
 | 4 | 1 | Gateway อย่างน้อย 2 sensors | Pi อ่าน AS5600 และ BH1750 โดยตรงใน gateway_sensors.py | แสดงค่าจริงของสองตัวผ่าน Gateway พร้อมกัน |
 | 5 | 1 | Actuator อย่างน้อย 1 | มี Servo ประตู/ราง; ผู้ใช้ยืนยันขยับแยกตัวแล้ว | คำสั่งระบบทำให้ actuator ทำงานจริงตาม flow |
-| 6 | 1 | ใช้ camera/video capture | มีกล้องในรายการ แต่ไม่พบ capture pipeline ที่รวมใน source นี้ | ภาพจากกล้องของเครื่องพร้อม job_id/เวลา ไม่ใช่ภาพสำเร็จรูปอย่างเดียว |
-| 7.1 | 1 | Image processing เช่น OCR ด้วย OpenCV/pretrained model | มีแผน/AI handoff; ไม่พบ pipeline ที่รันจริงใน source นี้ | ภาพก่อน/หลังประมวลผล ข้อความ OCR และโค้ดที่รันได้ |
-| 7.2 | 1 | ใช้ AI service | มีแผน Gemini และ HTTP interface; hook ไม่ใช่การเรียก AI service จริง | คำขอ/ผลตอบกลับจาก AI service โดยปิดบัง key พร้อมเชื่อม job จริง |
-| 8 | 1 | ผลประมวลภาพมีผลต่อระบบ | controller รับผล AI แล้ว choose/สั่งกลไกได้ แต่ BENCH ปัจจุบันเลือกช่องเอง | ภาพ → OCR → AI/resolve → A/B/HOLD → คำสั่ง/ผลกลไกจริง ห้ามใช้ปุ่มเลือกช่องแทนหลักฐานข้อนี้ |
+| 6 | 1 | ใช้ camera/video capture | มีโค้ดแล้ว: `backend/app/camera.py` (Picamera2), preview บน Dashboard และ `/api/camera/capture` เก็บภาพต่อ job; ยังไม่มีหลักฐานภาพจากกล้องจริง | ภาพจากกล้องของเครื่องพร้อม job_id/เวลา ไม่ใช่ภาพสำเร็จรูปอย่างเดียว |
+| 7.1 | 1 | Image processing เช่น OCR ด้วย OpenCV/pretrained model | มีโค้ดและรันได้บนคอม: OpenCV (ขยาย + CLAHE) + PaddleOCR PP-OCRv5 th (`ai/mini_sorting_ai/ocr.py`); หน้า /ocr-test แสดงผล; ยังไม่วัดกับภาพกล้องจริง | ภาพก่อน/หลังประมวลผล ข้อความ OCR และโค้ดที่รันได้ |
+| 7.2 | 1 | ใช้ AI service | เรียก Gemini (Flash-Lite) จริงได้จากข้อความ OCR → JSON → ตรวจ grounding/schema → resolver (25 พ.ย. ภาพสมมติ → RESOLVED/A) | คำขอ/ผลตอบกลับจาก AI service โดยปิดบัง key พร้อมเชื่อม job จริง |
+| 8 | 1 | ผลประมวลภาพมีผลต่อระบบ | โหมด AI: worker ส่งผล → controller choose/POSITION ตามช่อง (E2E ในเครื่องผ่าน MQTT จำลอง); ยังไม่ทดสอบกับ ESP32/กลไกจริง | ภาพ → OCR → AI/resolve → A/B/HOLD → คำสั่ง/ผลกลไกจริง ห้ามใช้ปุ่มเลือกช่องแทนหลักฐานข้อนี้ |
 | 9.1 | 1 | ประเมินเชิงปริมาณ: FPS และ Accuracy | มีแผนประเมิน ยังไม่พบผลวัดจริง | FPS ที่วัดจาก pipeline ที่ระบุขอบเขต พร้อม Accuracy จากชุดมีเฉลย/จำนวนตัวอย่าง |
 | 9.2 | 1 | ประเมินเชิงคุณภาพ: สำเร็จและไม่สำเร็จ | มี test cases/เหตุ fault แต่ไม่พบชุดภาพ/คลิปผลจริงครบ | ตัวอย่างภาพอ่านสำเร็จ/ล้มเหลว ผลที่เกิด และวิเคราะห์เหตุผล |
 | 10 | 3 | Message queue อย่างน้อย 3 topics สำหรับข้อมูลต่างแหล่ง พร้อมอธิบาย | มี source publish weight/height/passage จากเซนเซอร์คนละแหล่ง และ gateway เพิ่มอีก topic; โครงตรงข้อความเกณฑ์ | Broker trace จากอุปกรณ์จริงอย่างน้อยสาม topics อธิบายต้นทางและการใช้งาน ไม่ใช้ mock/ชื่อ topic อย่างเดียว |
@@ -120,7 +120,7 @@ Source ที่ยืนยันเส้นทาง: [firmware](../../firmwa
 
 ## งานที่ต้องปิดก่อนส่ง
 
-- รวมงาน AI team: camera capture, OCR, Gemini service, resolver และ job artifacts เข้ากับ HTTP hook ของ backend ไม่มีความจำเป็นต้องเปลี่ยน hook เป็น MQTT เพื่อให้ครบสาม topics
+- ~~รวมงาน AI team เข้ากับ HTTP hook~~ ทำใน source แล้ว 25 พ.ย. (worker บนคอม D026) เหลือทดสอบกับกล้อง/กล่อง/ESP32 จริง และเก็บภาพก่อน/หลัง preprocess เป็นหลักฐาน 7.1
 - วัด FPS และ Accuracy จากชุดมีเฉลย; ระบุว่าวัด capture, processing หรือ end-to-end ช่วงใด ไม่ใช้ความถี่ telemetry 2 Hz หรือสเปก FPS กล้องแทนผลประเมินภาพจริง
 - เก็บภาพ/คลิปสำเร็จและล้มเหลวพร้อมอธิบาย เช่น ฉลากชัด/อ่านไม่ได้/ข้อมูลขัดกัน และผล A/B/HOLD ที่เกิด
 - ทำ slides/video โดยใช้ architecture PC/Pi ล่าสุด มี SDG 8/9, I/O, strengths/limitations และ commercial comparison

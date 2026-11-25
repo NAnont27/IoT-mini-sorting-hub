@@ -28,6 +28,8 @@ export function SettingsPanel({ snapshot, disabled, onSave }: Props) {
       <label>ความสูงสูงสุด (mm)<input type="number" min="1" step="any" value={height} onChange={(e) => setHeight(e.target.value)} placeholder={String(snapshot?.config.max_height_mm ?? "ยังไม่ตั้ง")} disabled={blocked} /></label>
       <button type="submit" disabled={blocked || !hasLimitChange}>บันทึกขีดจำกัด</button>
     </form>
+    <p>โหมดคัดแยก: BENCH = คนกดเลือกช่องบนเว็บ, AI = กล้อง → OCR → Gemini เลือกช่อง (ต้องรัน vision worker บน Pi)</p>
+    <div className="actions">{(["bench", "ai"] as const).map((mode) => <button key={mode} disabled={blocked || snapshot?.config.mode === mode} onClick={() => void onSave({ mode })}>{snapshot?.config.mode === mode ? `ใช้อยู่: ${mode.toUpperCase()}` : `เปลี่ยนเป็น ${mode.toUpperCase()}`}</button>)}</div>
     <p>วางแม่เหล็กที่มุมของแต่ละช่อง แล้วบันทึกมุมจาก AS5600 จริง ช่วงมุมต้องไม่ทับกัน</p>
     <div className="actions">{(["A", "B", "HOLD"] as TargetBin[]).map((bin) => <button key={bin} disabled={blocked} onClick={() => void onSave({ save_angle_for: bin })}>จำมุมนี้เป็น {bin}</button>)}</div>
     <details className="technical-details"><summary>ดูค่าตั้งทั้งหมด</summary><pre>{JSON.stringify(snapshot?.config ?? {}, null, 2)}</pre></details>

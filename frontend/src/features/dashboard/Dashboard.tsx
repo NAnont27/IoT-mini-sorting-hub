@@ -7,6 +7,7 @@ import { CameraPanel } from "./CameraPanel";
 import { HistoryPanel } from "./HistoryPanel";
 import { JobsPanel } from "./JobsPanel";
 import { ServoTestPanel } from "./ServoTestPanel";
+import { VisionPanel } from "./VisionPanel";
 import { SettingsPanel } from "./SettingsPanel";
 
 const stateLabels: Record<string, string> = {
@@ -105,7 +106,7 @@ export function Dashboard() {
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark"><span /></div><div><strong>Sorta</strong><small>MINI SORTING HUB</small></div></div>
       <nav aria-label="เมนูหลัก">
-        <a className="active" href="#overview"><Icon name="overview" />ภาพรวม</a><a href="#sensors"><Icon name="activity" />เซนเซอร์</a><a href="#current-job"><Icon name="parcel" />งานปัจจุบัน</a><a href="#history"><Icon name="history" />ประวัติ</a><a href="#settings"><Icon name="settings" />ตั้งค่า</a>
+        <a className="active" href="#overview"><Icon name="overview" />ภาพรวม</a><a href="#sensors"><Icon name="activity" />เซนเซอร์</a><a href="#current-job"><Icon name="parcel" />งานปัจจุบัน</a><a href="#history"><Icon name="history" />ประวัติ</a><a href="#settings"><Icon name="settings" />ตั้งค่า</a><a href="/ocr-test"><Icon name="activity" />ทดสอบ OCR</a>
       </nav>
       <div className="sidebar-status"><span className={`connection-dot ${connected ? "connected" : ""}`} /><div><strong>{connected ? "Backend online" : "Backend offline"}</strong><small>{lastUpdated ? `อัปเดต ${lastUpdated.toLocaleTimeString("th-TH")}` : "กำลังเชื่อมต่อ"}</small></div></div>
       <p className="sidebar-foot">BENCH v2<br />สำหรับเครือข่ายทีมเท่านั้น</p>
@@ -144,7 +145,7 @@ export function Dashboard() {
       <CameraPanel />
 
       <section id="current-job" className="content-section" aria-labelledby="job-title"><div className="section-heading"><div><p className="eyebrow">ACTIVE PARCEL</p><h2 id="job-title">งานปัจจุบัน</h2></div>{job && <code className="job-id">{job.job_id}</code>}</div><div className="job-layout">
-        <div className="job-summary">{job ? <><div className="job-state-line"><span className="parcel-glyph"><Icon name="parcel" /></span><div><span>ขั้นตอนปัจจุบัน</span><strong>{stateLabels[job.state] ?? job.state}</strong></div></div><dl className="job-facts"><div><dt>น้ำหนัก</dt><dd>{typeof job.weight_g === "number" ? `${job.weight_g.toFixed(1)} g` : "—"}</dd></div><div><dt>ความสูง</dt><dd>{typeof job.height_mm === "number" ? `${job.height_mm.toFixed(0)} mm` : "—"}</dd></div><div><dt>โหมด</dt><dd>{job.mode.toUpperCase()}</dd></div></dl></> : <div className="no-job"><span className="parcel-glyph"><Icon name="parcel" /></span><div><strong>ยังไม่มีพัสดุบนถาด</strong><p>เมื่อ resume และกล่องนิ่ง ระบบจะสร้าง job_id อัตโนมัติ</p></div></div>}</div>
+        <div className="job-summary">{job ? <><div className="job-state-line"><span className="parcel-glyph"><Icon name="parcel" /></span><div><span>ขั้นตอนปัจจุบัน</span><strong>{stateLabels[job.state] ?? job.state}</strong></div></div><dl className="job-facts"><div><dt>น้ำหนัก</dt><dd>{typeof job.weight_g === "number" ? `${job.weight_g.toFixed(1)} g` : "—"}</dd></div><div><dt>ความสูง</dt><dd>{typeof job.height_mm === "number" ? `${job.height_mm.toFixed(0)} mm` : "—"}</dd></div><div><dt>โหมด</dt><dd>{job.mode.toUpperCase()}</dd></div></dl>{job.mode === "ai" && <VisionPanel job={job} />}</> : <div className="no-job"><span className="parcel-glyph"><Icon name="parcel" /></span><div><strong>ยังไม่มีพัสดุบนถาด</strong><p>เมื่อ resume และกล่องนิ่ง ระบบจะสร้าง job_id อัตโนมัติ</p></div></div>}</div>
         <div className="route-panel"><div className="route-title"><div><strong>เลือกช่องปลายทาง</strong><span>ใช้ได้เฉพาะสถานะ WAIT_DECISION</span></div><span className="manual-tag">MANUAL</span></div><div className="route-visual"><span className="route-origin">ถาดชั่ง</span><span className="route-line" /><div className="bin-stack">{(["A", "B", "HOLD"] as TargetBin[]).map((bin) => <button key={bin} className={`bin-choice ${selectedBin === bin ? "selected" : ""}`} disabled={disabled || currentState !== "WAIT_DECISION"} onClick={() => void control("target", bin)}><strong>{bin}</strong><span>{bin === "A" ? "ชั้นล่าง" : bin === "B" ? "ชั้นบน" : "รอตรวจ"}</span></button>)}</div></div></div>
       </div>{snapshot?.pending_command && <details className="technical-details"><summary>คำสั่ง MQTT ที่กำลังรอ ACK</summary><pre>{JSON.stringify(snapshot.pending_command, null, 2)}</pre></details>}</section>
 

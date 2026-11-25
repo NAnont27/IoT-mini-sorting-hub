@@ -24,6 +24,34 @@
 | `fixtures/` | ทะเบียนสมมติ, ข้อความ OCR ตัวอย่าง และผลจำลอง |
 | `.env.example` | ตัวอย่างค่า environment (ไม่มี key จริง) |
 
+## OCR จากภาพ (D025: PaddleOCR)
+
+`mini_sorting_ai/ocr.py` อ่านภาพฉลากด้วย OpenCV preprocess (ขยายภาพเล็ก + CLAHE) แล้ว PaddleOCR `lang=th` เรียงบรรทัดบนลงล่าง ตัดบรรทัดความมั่นใจต่ำ แล้วส่งข้อความเข้า `process_ocr_text()` เดิม Gemini ได้เฉพาะข้อความ ไม่ได้รับภาพ
+
+```powershell
+pip install paddlepaddle paddleocr opencv-python-headless
+$env:PYTHONIOENCODING = "utf-8"
+python ai/run_with_env.py --image path/to/label.jpg --job-id JOB-0001
+```
+
+ใช้ `PP-OCRv5_mobile_det` + `th_PP-OCRv5_mobile_rec` และปิด oneDNN (`enable_mkldnn=False`) เพราะ paddlepaddle 3.3 บน CPU ล้มเมื่อเปิด (ทดสอบบนคอม: ~3.8 วินาที/ภาพ; รุ่น server ~16 วินาที) ครั้งแรกจะดาวน์โหลดโมเดลของ PaddleOCR (ต้องมีเน็ต) ข้อความ OCR พิมพ์ทาง stderr ส่วน envelope (มี `timings_ms.preprocess/ocr` และ `artifacts.image_path`) พิมพ์ทาง stdout ยังไม่ได้ยืนยันการติดตั้งบน Pi 5 (aarch64) ให้ทดสอบบนคอมก่อน ใช้ภาพฉลากข้อมูลสมมติเท่านั้น
+
+## Vision worker — ต่อเข้าระบบ
+
+`mini_sorting_ai/worker.py` (รันด้วย `ai/run_worker.py` ที่โหลด `ai/.env`) วนถาม Backend:
+
+```
+GET /api/ai/pending → POST /api/camera/capture (Backend ถ่ายและเก็บภาพ) → PaddleOCR
+→ process_ocr_text() → POST /api/ai/result
+```
+
+worker ไม่เปิดกล้องเองและไม่สั่งกลไก; แต่ละ job/attempt ประมวลผลครั้งเดียว; ถ่ายภาพหรือ OCR ไม่ได้ → `PIPELINE_ERROR` ส่วน Gemini ล่ม → `SERVICE_ERROR` (Backend เข้า PAUSED_AI) ต้องตั้ง Backend เป็นโหมด `ai` จากหน้าเว็บก่อน
+
+```bash
+# บนคอม (D026) จากราก repo, ชี้ไป Flask บน Pi
+.venv\Scripts\python.exe ai\run_worker.py --backend http://<IP Pi>:5000
+```
+
 ## ตั้งค่า (ทำครั้งเดียว)
 
 1. ติดตั้ง SDK (ต้องใช้เฉพาะตอนเรียก Gemini จริง เทสต์และ mock ไม่ต้องใช้):

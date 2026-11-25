@@ -194,10 +194,10 @@ flowchart LR
     NODE[ESP32: น้ำหนัก IR ความสูง และ Servo] <-->|MQTT| MQ[MQTT broker บน Pi]
     MQ <--> API[Python Backend บน Pi]
     SENS[AS5600 และ BH1750 บน Pi] -->|MQTT| MQ
-    CAM[กล้อง] --> CV[OpenCV และ OCR]
-    CV --> API
-    API -->|ข้อความ OCR| AI[Gemini API]
-    AI -->|ผลโครงสร้าง| API
+    CAM[กล้องบน Pi] --> API
+    API -->|ภาพผ่าน HTTP| CV[คอม: OpenCV + PaddleOCR]
+    CV -->|ข้อความ OCR| AI[Gemini API]
+    AI -->|ผลโครงสร้าง + resolver| API
     API --> DB[InfluxDB]
     API --> FILES[ภาพและรายละเอียดงานในเครื่อง]
     DB --> API
@@ -208,7 +208,8 @@ flowchart LR
 |---|---|
 | ESP32 | อ่านเซนเซอร์ Node ควบคุม Servo รับคำสั่งแบบมีสถานะ ตรวจเวลาและการผ่านช่อง |
 | Pi: Hardware service | อ่านมุมรางและแสงผ่าน I2C ส่งค่าให้ Backend |
-| Pi: Vision service | รับภาพ เตรียมภาพ OCR เก็บภาพและผลอ่าน |
+| Pi: กล้อง | backend ถือ Camera Module 3 (Picamera2) ถ่ายภาพต่อ job และเก็บไฟล์ `backend/data/images/` |
+| คอม: Vision worker (D026) | ขอภาพจาก Pi → OpenCV + PaddleOCR → Gemini → resolver → ส่งผลกลับ `/api/ai/result`; ย้ายจาก Pi เพราะ PaddlePaddle segfault บน Pi 5 |
 | Pi: Backend | ประสานสถานะและ AI ตรวจผล เลือกกลุ่มชั้น จัดเก็บ และให้ HTTP API; ส่วน CSV/ค่าชั้นคั่นยังเป็นงานรุ่นส่งที่ต้องเพิ่ม |
 | Gemini API | แยกข้อความเป็นข้อมูลผู้รับ ไม่สั่งมอเตอร์โดยตรง |
 | MQTT broker | รับส่ง telemetry, คำสั่ง และ acknowledgement |
