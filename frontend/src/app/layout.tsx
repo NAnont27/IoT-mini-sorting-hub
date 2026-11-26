@@ -8,5 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return <html lang="th"><body>{children}</body></html>;
+  // suppressHydrationWarning: browser extensions (e.g. Grammarly) add data-* attributes to
+  // <body> before React hydrates. It only silences attribute diffs on <body> itself, not children.
+  return <html lang="th"><body suppressHydrationWarning>{children}</body></html>;
 }

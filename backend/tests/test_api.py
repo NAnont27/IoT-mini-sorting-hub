@@ -99,7 +99,7 @@ class CameraApiTests(unittest.TestCase):
         store.unfinished.return_value = []
         store.influx_status = "TEST"
         camera = MagicMock()
-        camera.snapshot_jpeg.return_value = b"\xff\xd8label\xff\xd9"
+        camera.full_jpeg.return_value = b"\xff\xd8label\xff\xd9"
         self.controllers = []
         real_controller = hub.Controller
 
@@ -125,7 +125,7 @@ class CameraApiTests(unittest.TestCase):
         response = self.client.post("/api/camera/capture",
                                     json={"job_id": "JOB-0123456789ab", "vision_attempt": 1})
         self.assertEqual(response.status_code, 400)
-        self.camera.snapshot_jpeg.assert_not_called()
+        self.camera.full_jpeg.assert_not_called()
 
     def test_capture_saves_fresh_image_for_waiting_job(self):
         self.controllers[0].job = {"job_id": "JOB-0123456789ab", "state": "WAIT_VISION",
@@ -133,7 +133,7 @@ class CameraApiTests(unittest.TestCase):
         response = self.client.post("/api/camera/capture",
                                     json={"job_id": "JOB-0123456789ab", "vision_attempt": 2})
         self.assertEqual(response.status_code, 200)
-        self.camera.snapshot_jpeg.assert_called_once_with(fresh=True)
+        self.camera.full_jpeg.assert_called_once_with()
         saved = self.root / "data" / "images" / "JOB-0123456789ab_a2.jpg"
         self.assertEqual(saved.read_bytes(), b"\xff\xd8label\xff\xd9")
         image = self.client.get("/api/camera/job/JOB-0123456789ab/2.jpg")
@@ -152,7 +152,7 @@ class CameraApiTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/ai/test").status_code, 400)
 
     def test_ai_test_capture_reports_camera_unavailable(self):
-        self.camera.snapshot_jpeg.side_effect = hub.CameraUnavailable("no camera")
+        self.camera.full_jpeg.side_effect = hub.CameraUnavailable("no camera")
         response = self.client.post("/api/ai/test?capture=1")
         self.assertEqual(response.status_code, 503)
         self.assertIn("no camera", response.json["error"])

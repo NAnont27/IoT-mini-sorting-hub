@@ -19,12 +19,15 @@ class CameraUnavailable(RuntimeError):
 
 
 class Camera:
-    def __init__(self, width=None, height=None, min_interval_s=0.3):
+    # 0.15 s cache: allows ~5 fps preview; several viewers share one frame instead of re-encoding.
+    def __init__(self, width=None, height=None, min_interval_s=0.15):
         self.enabled = os.getenv("CAMERA_ENABLED", "1") == "1"
-        # One configuration serves preview and OCR; labels need more pixels than a 720p preview.
+        # One full-size stream: OCR uses it as-is, the dashboard gets a reduced copy.
         self.size = (int(width or os.getenv("CAMERA_WIDTH", "1920")),
                      int(height or os.getenv("CAMERA_HEIGHT", "1080")))
         self.min_interval_s = min_interval_s
+        # Dashboard preview = full frame / CAMERA_PREVIEW_SCALE (3 -> 640x360); OCR keeps full size.
+        self.preview_scale = max(1, int(os.getenv("CAMERA_PREVIEW_SCALE", "3")))
         self._lock = threading.Lock()
         self._camera = None
         self._error = None if self.enabled else "CAMERA_ENABLED=0"
@@ -46,36 +49,48 @@ class Camera:
             raise CameraUnavailable("camera start failed: " + type(exc).__name__ + ": " + str(exc)) from exc
         self._camera = camera
 
-    def snapshot_jpeg(self, fresh=False):
-        """Return JPEG bytes; reuse a frame newer than min_interval_s unless fresh=True.
+    def _ensure_started_locked(self):
+        if self._camera is None:
+            try:
+                self._start()
+                self._error = None
+            except CameraUnavailable as exc:
+                self._error = str(exc)
+                raise
 
-        fresh=True is used for OCR capture so the label image is taken after the request.
-        """
+    def _capture_locked(self, scale, quality):
+        """Grab one frame from the full-size stream; scale>1 shrinks it with PIL reduce()."""
+        self._ensure_started_locked()
+        buffer = io.BytesIO()
+        try:
+            image = self._camera.capture_image("main")
+            if scale > 1:
+                image = image.reduce(scale)  # 1920x1080 / 3 = 640x360, cheap integer box filter
+            image.convert("RGB").save(buffer, format="JPEG", quality=quality)
+        except Exception as exc:
+            logging.exception("Camera capture failed")
+            self._error = "capture failed: " + type(exc).__name__
+            self.close_locked()
+            raise CameraUnavailable(self._error) from exc
+        return buffer.getvalue()
+
+    def preview_jpeg(self):
+        """Small JPEG for the dashboard (~640x360); viewers within min_interval_s share a frame."""
         if not self.enabled:
             raise CameraUnavailable(self._error)
         with self._lock:
-            now = time.monotonic()
-            if (not fresh and self._last_jpeg is not None
-                    and now - self._last_at < self.min_interval_s):
+            if self._last_jpeg is not None and time.monotonic() - self._last_at < self.min_interval_s:
                 return self._last_jpeg
-            if self._camera is None:
-                try:
-                    self._start()
-                    self._error = None
-                except CameraUnavailable as exc:
-                    self._error = str(exc)
-                    raise
-            buffer = io.BytesIO()
-            try:
-                self._camera.capture_file(buffer, format="jpeg")
-            except Exception as exc:
-                logging.exception("Camera capture failed")
-                self._error = "capture failed: " + type(exc).__name__
-                self.close_locked()
-                raise CameraUnavailable(self._error) from exc
-            self._last_jpeg = buffer.getvalue()
+            self._last_jpeg = self._capture_locked(self.preview_scale, 70)
             self._last_at = time.monotonic()
             return self._last_jpeg
+
+    def full_jpeg(self):
+        """Fresh full-resolution JPEG for OCR (never cached, taken after the request)."""
+        if not self.enabled:
+            raise CameraUnavailable(self._error)
+        with self._lock:
+            return self._capture_locked(1, 92)
 
     def status(self):
         with self._lock:

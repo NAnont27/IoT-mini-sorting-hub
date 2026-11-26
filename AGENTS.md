@@ -218,8 +218,8 @@ Project/
 | E18 ถาด `tray` | 11, `INPUT` ผ่านวงจร R v2 (GPIO8, 9, 14 ว่าง) |
 | LED เขียว / เหลือง / แดง | 15 / 16 / 17 ผ่าน R330Ω ดวงละตัว |
 
-- ค่าใน firmware: ประตู ปิด 90 / เปิด 60; ราง A60 / B90 / HOLD120 (มุมคำสั่ง ไม่ใช่มุมสอบเทียบ)
-- 24 พ.ย.: MG996R ราง attach **600–2400 µs** (เดิม 1000–2000) เพื่อให้ได้ใกล้ 180°; MG90S ประตูคง 1000–2000; ปุ่มทดสอบเว็บเหลือ 0°/180° — มุมคำสั่ง A/B/HOLD จึงได้ตำแหน่งจริงต่างจากเดิม ต้องจำมุมด้วย AS5600 ใหม่
+- ค่าใน firmware: ประตู ปิด 180 / เปิด 0 (25 พ.ย. ผู้ใช้ขอแกว่งจริง ~90° บนช่วง 1000–2000 µs); ราง A60 / B90 / HOLD120 (มุมคำสั่ง ไม่ใช่มุมสอบเทียบ)
+- 24 พ.ย.: MG996R ราง attach **600–2400 µs** (เดิม 1000–2000) เพื่อให้ได้ใกล้ 180°; MG90S ประตูคง 1000–2000 (ลอง 500–2400 แล้วผู้ใช้ขอคืนค่า 25 พ.ย.); ปุ่มทดสอบเว็บเหลือ 0°/180° — มุมคำสั่ง A/B/HOLD จึงได้ตำแหน่งจริงต่างจากเดิม ต้องจำมุมด้วย AS5600 ใหม่
 - เลี่ยง GPIO19/20 (USB), GPIO35–37 (Octal memory), ไม่ใช้ GPIO32/33 ของตัวอย่าง ESP32 รุ่นเก่า
 - Load cell สี่สาย: แดง E+, ดำ E−, เขียว A+, ขาว A−
 
@@ -354,6 +354,7 @@ BH1750 + AS5600 ขนานบนบัสเดียว: **pin1 = 3.3V, pin6 
 
 - ชื่อฟิลด์: `target_bin`, `resolved_room`, `resolved_floor`, `reason_code`; job มี `destination_sensed`
 - OCR test: `POST /api/ai/test?ai=0|1[&capture=1]` body = JPEG/PNG (สูงสุด 10 MB) ใช้ทะเบียน demo และ `ai/.env` ของเครื่องที่รัน backend; แสดงชื่อ/ห้องผู้รับบนหน้าเว็บ จึงใช้ฉลากข้อมูลสมมติเท่านั้น; Next `experimental.proxyTimeout` = 120 s
+- Camera: preview บน Dashboard = เฟรมเต็มย่อ ÷`CAMERA_PREVIEW_SCALE` (3 → 640×360, JPEG q70, cache 0.15 s, เลือก 1/2/5 fps บนเว็บ); OCR ใช้ `full_jpeg()` 1920×1080 ใหม่ทุกครั้ง (`/api/camera/capture`, `snapshot.jpg?full=1`)
 - Vision: `POST /api/camera/capture` {job_id, vision_attempt} ใช้ได้เฉพาะ job ที่ WAIT_VISION ตรงกัน ถ่ายภาพใหม่ (ไม่ใช้ cache) เก็บ `backend/data/images/` และ header `X-Image-Path`; `GET /api/camera/job/<job_id>/<n>.jpg`; `/api/settings` รับ `mode` bench/ai (พักและไม่มี job); worker `ai/run_worker.py` ส่ง PIPELINE_ERROR เมื่อถ่าย/OCR ไม่ได้ (→ FAULT), Gemini ล่ม → SERVICE_ERROR (→ PAUSED_AI); ชื่อ/ห้องผู้รับไม่เก็บใน job (VISION_PUBLIC_FIELDS)
 - Camera: `GET /api/camera/snapshot.jpg` (JPEG, 503+เหตุผลเมื่อไม่มีกล้อง), `GET /api/camera/status`; `CAMERA_ENABLED` ใน `backend/.env`; Pi ต้องมี `python3-picamera2` และ `.venv` เห็น system site-packages; ห้ามรันโปรแกรมอื่นจับกล้องพร้อม backend
 - Routes: `/api/status`, `/api/control`, `/api/settings`, `/api/jobs`, `/api/history`, `GET /api/ai/pending`, `POST /api/ai/result` (RESOLVED/HOLD/RETRY_CAPTURE/SERVICE_ERROR/PIPELINE_ERROR ตาม `docs/ai/AI_INTERFACE_TH.md`)

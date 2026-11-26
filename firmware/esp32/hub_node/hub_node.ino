@@ -23,7 +23,8 @@ const char *IR_NAMES[IR_COUNT] = { "tray" };
 // External resistors set both logic levels; do not enable internal pull-ups.
 constexpr int LED_GREEN = 15, LED_YELLOW = 16, LED_RED = 17;
 // Nominal bench positions, NOT calibrated physical chute angles.
-constexpr int GATE_CLOSED = 90, GATE_OPEN = 60;
+// MG90S on 1000-2000 us: write(0..180) ~ 90 deg physical, so 180 -> 0 swings the gate ~90 deg.
+constexpr int GATE_CLOSED = 180, GATE_OPEN = 0;
 constexpr int CHUTE_ANGLES[] = { 60, 90, 120 };
 constexpr float STABILITY_G = 5.0f;
 constexpr int WINDOW = 10;
@@ -33,6 +34,20 @@ PubSubClient mqtt(network);
 Preferences prefs;
 HX711 scale;
 Servo gateServo, chuteServo;
+// Gate moves gradually at about half the MG90S native speed: 6 command-degrees every 10 ms
+// (180 -> 0 in ~0.3 s). Non-blocking: moveGate() sets the target, updateGate() steps in loop().
+constexpr int GATE_STEP_DEG = 6;
+constexpr uint32_t GATE_STEP_MS = 10;
+int gatePos = 0, gateTarget = 0;
+uint32_t lastGateStep = 0;
+void moveGate(int angle) { gateTarget = constrain(angle, 0, 180); }
+void updateGate() {
+  if (gatePos == gateTarget || millis() - lastGateStep < GATE_STEP_MS) return;
+  lastGateStep = millis();
+  const int delta = gateTarget - gatePos;
+  gatePos += constrain(delta, -GATE_STEP_DEG, GATE_STEP_DEG);
+  gateServo.write(gatePos);
+}
 // "tof*" names kept for the existing MQTT/Serial contract; they now describe the SRF05.
 // tofFound = an echo was received recently (sensor answering).
 String sessionId, activeJob, targetBin, displayState = "PAUSED_OPERATOR";
@@ -117,7 +132,7 @@ bool pathClear() {
 void latchFault() {
   nodeFault = true;
   // Never move a chute carrying a released parcel. Before release keep gate closed.
-  if (!released) gateServo.write(GATE_CLOSED);
+  if (!released) moveGate(GATE_CLOSED);
 }
 
 void onCommand(char *, byte *payload, unsigned int length) {
@@ -165,7 +180,7 @@ void onCommand(char *, byte *payload, unsigned int length) {
       ack(id, "REJECTED", "IR_PATH_BLOCKED");
       return;
     }
-    gateServo.write(GATE_CLOSED);
+    moveGate(GATE_CLOSED);
     activeJob = "";
     targetBin = "";
     released = false;
@@ -188,7 +203,7 @@ void onCommand(char *, byte *payload, unsigned int length) {
       ack(id, "REJECTED", "SERVO_TEST_NOT_ALLOWED");
       return;
     }
-    (servo == "gate" ? gateServo : chuteServo).write(angle);
+    if (servo == "gate") moveGate(angle); else chuteServo.write(angle);
     Serial.printf("SERVO_TEST %s=%d\n", servo.c_str(), angle);
     ack(id, "DONE");
     return;
@@ -202,7 +217,7 @@ void onCommand(char *, byte *payload, unsigned int length) {
     }
     activeJob = job;
     targetBin = bin;
-    gateServo.write(GATE_CLOSED);
+    moveGate(GATE_CLOSED);
     chuteServo.write(CHUTE_ANGLES[index]);
     // DONE = command applied, NOT proof of measured angle or bin arrival.
     ack(id, "DONE");
@@ -220,7 +235,7 @@ void onCommand(char *, byte *payload, unsigned int length) {
     }
     released = true;
     releaseCommand = id;
-    gateServo.write(GATE_OPEN);
+    moveGate(GATE_OPEN);
     gateDoneAt = millis() + 500;
     if (gateDoneAt == 0) gateDoneAt = 1;
     ack(id, "ACCEPTED");
@@ -231,7 +246,7 @@ void onCommand(char *, byte *payload, unsigned int length) {
       ack(id, "REJECTED", "COMPLETE_NOT_ALLOWED");
       return;
     }
-    gateServo.write(GATE_CLOSED);
+    moveGate(GATE_CLOSED);
     activeJob = "";
     targetBin = "";
     released = false;
@@ -517,7 +532,8 @@ void setup() {
   // MG996R: 1000-2000 us gave only ~90 deg (05c test). 600-2400 us ~ 180 deg.
   // write(0..180) now maps to this wider range; CHUTE_ANGLES are command values, not calibrated.
   chuteServo.attach(CHUTE_PIN, 600, 2400);
-  gateServo.write(GATE_CLOSED);
+  gatePos = gateTarget = GATE_CLOSED;
+  gateServo.write(GATE_CLOSED);  // boot: go straight to closed
   chuteServo.write(90);
   if (!gateServo.attached() || !chuteServo.attached()) nodeFault = true;
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
@@ -535,6 +551,7 @@ void loop() {
   connectNetwork();
   mqtt.loop();
   if (activeJob.length() && (!mqtt.connected() || elapsed(millis(), lastLease, 4000))) latchFault();
+  updateGate();
   sampleSensors();
   serialCommands();
   if (gateDoneAt && int32_t(millis() - gateDoneAt) >= 0) {

@@ -35,7 +35,7 @@ def build_app(backend: str) -> Flask:
         use_ai = request.args.get("ai", "1") == "1"
         if request.args.get("capture") == "1":
             try:
-                response = requests.get(backend.rstrip("/") + "/api/camera/snapshot.jpg", timeout=15)
+                response = requests.get(backend.rstrip("/") + "/api/camera/snapshot.jpg?full=1", timeout=15)  # full-res for OCR
             except requests.RequestException as exc:
                 return jsonify(error=f"ติดต่อ backend บน Pi ไม่ได้: {type(exc).__name__}"), 503
             if response.status_code != 200:

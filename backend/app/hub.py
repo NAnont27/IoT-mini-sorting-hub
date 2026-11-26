@@ -201,7 +201,8 @@ def build_app():
     @app.get("/api/camera/snapshot.jpg")
     def camera_snapshot():
         try:
-            jpeg = camera.snapshot_jpeg()
+            # ?full=1: full-resolution fresh frame (OCR test page on the PC); default = small preview
+            jpeg = camera.full_jpeg() if request.args.get("full") == "1" else camera.preview_jpeg()
         except CameraUnavailable as exc:
             return jsonify(error="Camera unavailable: " + str(exc)), 503
         return Response(jpeg, mimetype="image/jpeg")
@@ -225,7 +226,7 @@ def build_app():
                 raise ValueError("No matching job waiting for vision")
         path = job_image_path(job_id, attempt)
         try:
-            jpeg = camera.snapshot_jpeg(fresh=True)
+            jpeg = camera.full_jpeg()
         except CameraUnavailable as exc:
             return jsonify(error="Camera unavailable: " + str(exc)), 503
         image_dir.mkdir(parents=True, exist_ok=True)
@@ -247,7 +248,7 @@ def build_app():
         use_ai = request.args.get("ai", "1") == "1"
         if request.args.get("capture") == "1":
             try:
-                image = camera.snapshot_jpeg(fresh=True)
+                image = camera.full_jpeg()
             except CameraUnavailable as exc:
                 return jsonify(error="Camera unavailable: " + str(exc)), 503
         else:
